@@ -2,16 +2,21 @@
 .idea/
 *.iml
 
+# Node
+node_modules/
+
 # Environment
 .env
-
-# OS
-.DS_Store
-Thumbs.db
+.env.*
 
 # Backend
 backend/target/
 
 # Frontend
 frontend/node_modules/
+frontend/.quasar/
 frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
