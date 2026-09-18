@@ -22,7 +22,7 @@
 - `Raid`: название, максимальный и текущий HP, статус.
 - `ProgressionResult`: результат завершения Квеста.
 
-Точная модель хранения и API согласуется на Этапе 0; см. [BACKEND.md](BACKEND.md) и [ARCHITECTURE.md](ARCHITECTURE.md).
+Точная модель хранения и API согласуется на Этапе 0; см. [backend/README.md](backend/README.md) и [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Основной пользовательский сценарий
 
