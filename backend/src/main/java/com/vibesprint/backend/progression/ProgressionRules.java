@@ -8,6 +8,7 @@ import java.util.Optional;
 public class ProgressionRules {
 
     private static final int[] LEVEL_THRESHOLDS = {0, 200, 400, 600, 1000, 1500};
+    private static final int RARE_HOODIE_LEVEL = 5;
     private static final int RARE_HOODIE_XP = 1000;
     private static final CosmeticUnlock RARE_HOODIE = new CosmeticUnlock("rare-hoodie", "Rare Hoodie");
 
@@ -48,6 +49,17 @@ public class ProgressionRules {
         return Optional.empty();
     }
 
+    public Optional<UnlockTarget> nextUnlock(int totalXp) {
+        describe(totalXp);
+        if (totalXp < RARE_HOODIE_XP) {
+            return Optional.of(new UnlockTarget(RARE_HOODIE_LEVEL, RARE_HOODIE));
+        }
+        return Optional.empty();
+    }
+
     public record PlayerProgress(int level, Integer nextLevelXp, String title, String cosmeticKey) {
+    }
+
+    public record UnlockTarget(int level, CosmeticUnlock cosmetic) {
     }
 }

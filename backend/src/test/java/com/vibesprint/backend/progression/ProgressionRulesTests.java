@@ -54,6 +54,15 @@ class ProgressionRulesTests {
     }
 
     @Test
+    void describesOnlyRemainingMvpUnlock() {
+        assertEquals(
+                new ProgressionRules.UnlockTarget(5, new CosmeticUnlock("rare-hoodie", "Rare Hoodie")),
+                progressionRules.nextUnlock(920).orElseThrow()
+        );
+        assertFalse(progressionRules.nextUnlock(1000).isPresent());
+    }
+
+    @Test
     void rejectsInvalidProgressionValues() {
         assertThrows(IllegalArgumentException.class, () -> progressionRules.describe(-1));
         assertThrows(IllegalArgumentException.class, () -> progressionRules.unlockedCosmetic(100, 99));
