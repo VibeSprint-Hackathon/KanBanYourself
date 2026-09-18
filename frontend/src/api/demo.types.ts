@@ -1,19 +1,24 @@
-// GET /api/demo/state — docs/stages/00-contracts/CONTRACTS.md.
+// Контракты GET /api/demo/state и POST /api/demo/quests/{questId}/complete.
+export type QuestStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+export type RaidStatus = 'ACTIVE' | 'DEFEATED';
+export type CharacterState = 'idle' | 'coding';
+export type CharacterReaction = 'happy' | 'level-up';
+
 export interface Player {
   id: number;
   name: string;
   totalXp: number;
   level: number;
-  nextLevelXp: number;
+  nextLevelXp: number | null;
   title: string;
   cosmeticKey: string;
-  characterState: 'idle' | 'coding';
+  characterState: CharacterState;
 }
 
 export interface Quest {
   id: number;
   title: string;
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  status: QuestStatus;
   xpReward: number;
   assigneeId: number;
   externalReference: string | null;
@@ -24,14 +29,20 @@ export interface Raid {
   name: string;
   maxHp: number;
   currentHp: number;
-  status: 'ACTIVE' | 'DEFEATED';
+  status: RaidStatus;
+}
+
+export interface UnlockTarget {
+  level: number;
+  cosmeticKey: string;
+  displayName: string;
 }
 
 export interface DemoState {
   player: Player;
   quests: Quest[];
   raid: Raid;
-  nextUnlock: { level: number; cosmeticKey: string; displayName: string };
+  nextUnlock: UnlockTarget | null;
 }
 
 export interface CosmeticUnlock {
@@ -39,9 +50,6 @@ export interface CosmeticUnlock {
   displayName: string;
 }
 
-export type CharacterReaction = 'happy' | 'level-up';
-
-// POST /api/demo/quests/{questId}/complete response.
 export interface ProgressionResult {
   eventId: string;
   applied: boolean;
@@ -56,3 +64,11 @@ export interface ProgressionResult {
   player: Player;
   raid: Raid;
 }
+
+// Совместимые имена для realtime-слоя и имён DTO backend.
+export type PlayerView = Player;
+export type QuestView = Quest;
+export type RaidView = Raid;
+export type CosmeticView = CosmeticUnlock;
+export type ProgressionReaction = CharacterReaction;
+export type ProgressionResponse = ProgressionResult;

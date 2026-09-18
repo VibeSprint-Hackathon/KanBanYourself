@@ -36,7 +36,8 @@ export function useDashboardDemo() {
 
     const questPresentation = view.quests[result.quest.id];
     if (questPresentation) questPresentation.progressPercent = 100;
-    view.player.xpProgress = result.player.totalXp / result.player.nextLevelXp;
+    view.player.xpProgress =
+      result.player.nextLevelXp === null ? 1 : result.player.totalXp / result.player.nextLevelXp;
     view.player.xpToReward = 0;
     view.raid.playerDamage = result.raidDamage;
     view.activity.title = result.levelUp

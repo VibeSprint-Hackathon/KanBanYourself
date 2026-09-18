@@ -41,9 +41,10 @@ defineProps<{
     <div class="player-progress">
       <div class="spread progress-heading">
         <h3>Level progress</h3>
-        <strong class="orange"
-          >{{ formatNumber(player.totalXp) }} / {{ formatNumber(player.nextLevelXp) }} XP</strong
-        >
+        <strong v-if="player.nextLevelXp !== null" class="orange">
+          {{ formatNumber(player.totalXp) }} / {{ formatNumber(player.nextLevelXp) }} XP
+        </strong>
+        <strong v-else class="orange">{{ formatNumber(player.totalXp) }} XP · MAX</strong>
       </div>
       <q-linear-progress
         class="progress-track xp-progress"
@@ -51,7 +52,7 @@ defineProps<{
         aria-label="Level progress"
         size="14px"
       />
-      <div class="next-reward">
+      <div v-if="nextUnlock" class="next-reward">
         <div class="eyebrow orange">
           <q-icon name="auto_awesome" size="17px" />
           {{ player.cosmeticKey === nextUnlock.cosmeticKey ? 'Reward unlocked' : 'Next reward' }}
@@ -62,6 +63,12 @@ defineProps<{
             >{{ formatNumber(presentation.xpToReward) }} XP</strong
           >
           <q-icon v-else name="check_circle" size="20px" class="green" />
+        </div>
+      </div>
+      <div v-else class="next-reward">
+        <div class="eyebrow orange">
+          <q-icon name="verified" size="17px" />
+          All rewards unlocked
         </div>
       </div>
     </div>
