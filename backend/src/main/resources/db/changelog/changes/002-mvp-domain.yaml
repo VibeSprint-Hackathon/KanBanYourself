@@ -1,0 +1,200 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-mvp-domain
+      author: vibesprint
+      changes:
+        - dropTable:
+            tableName: example_item
+
+        - createTable:
+            tableName: player
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_xp
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: quest
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: xp_reward
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: assignee_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: external_reference
+                  type: VARCHAR(500)
+
+        - addForeignKeyConstraint:
+            baseTableName: quest
+            baseColumnNames: assignee_id
+            constraintName: fk_quest_assignee
+            referencedTableName: player
+            referencedColumnNames: id
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: quest
+            indexName: idx_quest_assignee_id
+            columns:
+              - column:
+                  name: assignee_id
+
+        - createTable:
+            tableName: raid
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: max_hp
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_hp
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: |
+              ALTER TABLE player
+                ADD CONSTRAINT ck_player_name_not_blank CHECK (btrim(name) <> ''),
+                ADD CONSTRAINT ck_player_total_xp_non_negative CHECK (total_xp >= 0);
+              ALTER TABLE quest
+                ADD CONSTRAINT ck_quest_title_not_blank CHECK (btrim(title) <> ''),
+                ADD CONSTRAINT ck_quest_status CHECK (status IN ('TODO', 'IN_PROGRESS', 'DONE')),
+                ADD CONSTRAINT ck_quest_xp_reward_positive CHECK (xp_reward > 0);
+              ALTER TABLE raid
+                ADD CONSTRAINT ck_raid_name_not_blank CHECK (btrim(name) <> ''),
+                ADD CONSTRAINT ck_raid_max_hp_positive CHECK (max_hp > 0),
+                ADD CONSTRAINT ck_raid_current_hp_range CHECK (current_hp >= 0 AND current_hp <= max_hp);
+
+        - insert:
+            tableName: player
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: name
+                  value: Andrei
+              - column:
+                  name: total_xp
+                  valueNumeric: 920
+
+        - insert:
+            tableName: quest
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 101
+              - column:
+                  name: title
+                  value: Fix payment validation
+              - column:
+                  name: status
+                  value: IN_PROGRESS
+              - column:
+                  name: xp_reward
+                  valueNumeric: 180
+              - column:
+                  name: assignee_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: quest
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 102
+              - column:
+                  name: title
+                  value: Add rate limit warning
+              - column:
+                  name: status
+                  value: TODO
+              - column:
+                  name: xp_reward
+                  valueNumeric: 120
+              - column:
+                  name: assignee_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: quest
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 103
+              - column:
+                  name: title
+                  value: Improve login error copy
+              - column:
+                  name: status
+                  value: DONE
+              - column:
+                  name: xp_reward
+                  valueNumeric: 80
+              - column:
+                  name: assignee_id
+                  valueNumeric: 1
+
+        - insert:
+            tableName: raid
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 201
+              - column:
+                  name: name
+                  value: Merge Conflict Hydra
+              - column:
+                  name: max_hp
+                  valueNumeric: 1000
+              - column:
+                  name: current_hp
+                  valueNumeric: 180
