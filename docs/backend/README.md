@@ -2,7 +2,7 @@
 
 ## Текущее состояние
 
-Бэкенд — приложение Spring Boot с `/api/health`, PostgreSQL, Liquibase, JPA, Validation и зависимостью WebSocket. A1 добавил хранение, A2 — атомарный прогресс, A3 — чтение демо-состояния и REST-команду завершения через DTO.
+Бэкенд — приложение Spring Boot с PostgreSQL, Liquibase, JPA, Validation и WebSocket/STOMP. A1 добавил хранение, A2 — атомарный прогресс, A3 — REST API, C1/C2 — исходящий realtime и атомарный reset.
 
 ## Локальная среда
 
@@ -53,7 +53,7 @@
 - `POST /api/demo/quests/{questId}/complete` для завершения Квеста;
 - `ProgressionResponse` с обновлёнными Квестом, игроком, рейдом и результатом награды.
 
-`POST /api/demo/reset` остаётся задачей C2. Точные DTO и результат A3 описаны в [README этапа 01](../stages/01-mvp/README.md), а код и HTTP-тесты являются источником истины реализации.
+`POST /api/demo/reset` восстанавливает исходный seed. STOMP endpoint `/ws` публикует применённый результат в `/topic/progression`. Точные контракты описаны в [API.md](API.md), а код и тесты являются источником истины реализации.
 
 ## Хранение и прогресс
 

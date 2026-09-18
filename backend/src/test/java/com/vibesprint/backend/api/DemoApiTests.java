@@ -110,6 +110,45 @@ class DemoApiTests {
     }
 
     @Test
+    void resetsCompletedDemoToDeterministicSeed() throws Exception {
+        mockMvc.perform(post("/api/demo/quests/101/complete")
+                        .contentType("application/json")
+                        .content("{\"eventId\":\"before-reset\",\"source\":\"DEMO\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applied").value(true));
+
+        mockMvc.perform(post("/api/demo/reset"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.player.totalXp").value(920))
+                .andExpect(jsonPath("$.player.characterState").value("coding"))
+                .andExpect(jsonPath("$.quests", hasSize(3)))
+                .andExpect(jsonPath("$.quests[0].id").value(101))
+                .andExpect(jsonPath("$.quests[0].status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.quests[1].status").value("TODO"))
+                .andExpect(jsonPath("$.quests[2].status").value("DONE"))
+                .andExpect(jsonPath("$.raid.currentHp").value(180))
+                .andExpect(jsonPath("$.raid.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.nextUnlock.cosmeticKey").value("rare-hoodie"));
+    }
+
+    @Test
+    void resetRecoversMissingAndRemovesUnexpectedDemoData() throws Exception {
+        jdbcTemplate.update("delete from raid");
+        jdbcTemplate.update(
+                "insert into raid (id, name, max_hp, current_hp) values (999, 'Unexpected Raid', 10, 10)"
+        );
+
+        mockMvc.perform(post("/api/demo/reset"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.raid.id").value(201))
+                .andExpect(jsonPath("$.raid.currentHp").value(180));
+
+        mockMvc.perform(get("/api/demo/state"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.raid.id").value(201));
+    }
+
+    @Test
     void mapsInvalidRequestsToStableError() throws Exception {
         mockMvc.perform(post("/api/demo/quests/0/complete")
                         .contentType("application/json")

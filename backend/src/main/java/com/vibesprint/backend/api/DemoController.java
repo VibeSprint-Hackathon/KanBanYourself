@@ -1,8 +1,10 @@
 package com.vibesprint.backend.api;
 
+import com.vibesprint.backend.integration.DemoResetService;
 import com.vibesprint.backend.progression.CompleteQuestCommand;
 import com.vibesprint.backend.progression.ProgressionService;
 import com.vibesprint.backend.progression.ProgressionSource;
+import com.vibesprint.backend.realtime.ProgressionRealtimePublisher;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.validation.annotation.Validated;
@@ -21,20 +23,31 @@ public class DemoController {
     private final DemoStateQueryService stateQueryService;
     private final ProgressionService progressionService;
     private final DemoApiMapper mapper;
+    private final ProgressionRealtimePublisher realtimePublisher;
+    private final DemoResetService resetService;
 
     public DemoController(
             DemoStateQueryService stateQueryService,
             ProgressionService progressionService,
-            DemoApiMapper mapper
+            DemoApiMapper mapper,
+            ProgressionRealtimePublisher realtimePublisher,
+            DemoResetService resetService
     ) {
         this.stateQueryService = stateQueryService;
         this.progressionService = progressionService;
         this.mapper = mapper;
+        this.realtimePublisher = realtimePublisher;
+        this.resetService = resetService;
     }
 
     @GetMapping("/state")
     public DemoStateResponse getState() {
         return stateQueryService.getState();
+    }
+
+    @PostMapping("/reset")
+    public DemoStateResponse reset() {
+        return resetService.reset();
     }
 
     @PostMapping("/quests/{questId}/complete")
@@ -47,6 +60,8 @@ public class DemoController {
                 request.eventId(),
                 ProgressionSource.valueOf(request.source().name())
         );
-        return mapper.toResponse(progressionService.completeQuest(command));
+        ProgressionResponse response = mapper.toResponse(progressionService.completeQuest(command));
+        realtimePublisher.publish(response);
+        return response;
     }
 }
