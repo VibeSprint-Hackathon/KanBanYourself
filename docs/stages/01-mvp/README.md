@@ -12,7 +12,7 @@
 - Контракты и правила прогресса: [../00-contracts/README.md](../00-contracts/README.md).
 - Точные REST payload: [../00-contracts/CONTRACTS.md](../00-contracts/CONTRACTS.md).
 - План и порядок работ: [../../IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md).
-- Постоянные правила бэкенда: [../../BACKEND.md](../../BACKEND.md).
+- Постоянные правила бэкенда: [../../backend/README.md](../../backend/README.md).
 
 Не перечитывать остальные документы без конкретной необходимости.
 

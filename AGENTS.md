@@ -68,7 +68,7 @@
 
 ## Маршруты чтения
 
-- Задача по бэкенду: этот файл + `docs/BACKEND.md` + нужный раздел `docs/MVP.md`.
+- Задача по бэкенду: этот файл + `docs/backend/README.md` + нужный раздел `docs/MVP.md`.
 - Задача по фронтенду: этот файл + `docs/FRONTEND.md` + `docs/DESIGN.md`.
 - Общий контракт или системный поток: этот файл + `docs/ARCHITECTURE.md`.
 - GitHub, realtime или n8n: этот файл + `docs/INTEGRATIONS.md`.
