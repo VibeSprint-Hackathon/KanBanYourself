@@ -1,38 +1,39 @@
-# VibeSprint (vibesprint-frontend)
+# VibeSprint — фронтенд
 
-## Install the dependencies
+## Установка зависимостей
 
 ```bash
 pnpm install
-# or: yarn/npm/bun install
+# или: yarn/npm/bun install
 ```
 
-### Start the app in development mode (HMR, error reporting, etc.)
+## Запуск в режиме разработки
 
 ```bash
 quasar dev
 ```
 
-### Format & Lint the files
+## Форматирование и lint
 
 ```bash
 pnpm run lint
-# or: yarn/npm/bun run lint
+# или: yarn/npm/bun run lint
 ```
 
-...or just check formatting & linting:
+Только проверка форматирования и lint:
 
 ```bash
 pnpm run lint:check
-# or: yarn/npm/bun run lint:check
+# или: yarn/npm/bun run lint:check
 ```
 
-### Build the app for production
+## Production-сборка
 
 ```bash
 quasar build
 ```
 
-### Customize the configuration
+## Конфигурация
 
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-file).
+См. [документацию Quasar](https://v2.quasar.dev/quasar-cli-vite/quasar-config-file).
+
