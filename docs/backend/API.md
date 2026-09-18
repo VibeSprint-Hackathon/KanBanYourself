@@ -177,6 +177,7 @@ curl -X POST http://localhost:8080/api/demo/reset
 - Протокол: STOMP поверх WebSocket.
 - Подключение: `ws://localhost:8080/ws`.
 - Подписка: `/topic/progression`.
+- Разрешённые Origin MVP: `http://localhost:*` и `http://127.0.0.1:*`.
 - Payload: тот же JSON, что возвращает успешный `POST .../complete`.
 - Сообщение отправляется только при `applied=true`; повтор не создаёт событие.
 - Reset не отправляет другой тип сообщения.

@@ -1,39 +1,29 @@
 # VibeSprint — фронтенд
 
-## Установка зависимостей
+Vue 3 + TypeScript + Quasar Dashboard. Текущее состояние и следующий шаг описаны в [FRONTEND.md](../docs/FRONTEND.md) и [IMPLEMENTATION_PLAN.md](../docs/IMPLEMENTATION_PLAN.md).
+
+## Требования
+
+- Node.js `>=22.12` согласно `package.json`.
+- Запущенный backend на `http://localhost:8080` для API и WebSocket.
+
+## Установка и запуск
 
 ```bash
-pnpm install
-# или: yarn/npm/bun install
+npm install
+npm run dev
 ```
 
-## Запуск в режиме разработки
+Dev-сервер проксирует `/api` на backend. STOMP в разработке подключается к `ws://localhost:8080/ws`; другой адрес можно задать через `VITE_WS_URL`.
+
+## Проверки
 
 ```bash
-quasar dev
+npm run typecheck
+npm run lint:check
+npm run build
 ```
 
-## Форматирование и lint
+## Текущая граница
 
-```bash
-pnpm run lint
-# или: yarn/npm/bun run lint
-```
-
-Только проверка форматирования и lint:
-
-```bash
-pnpm run lint:check
-# или: yarn/npm/bun run lint:check
-```
-
-## Production-сборка
-
-```bash
-quasar build
-```
-
-## Конфигурация
-
-См. [документацию Quasar](https://v2.quasar.dev/quasar-cli-vite/quasar-config-file).
-
+Dashboard реализован, но пока получает доменное состояние из fixture. Следующая задача — добавить типизированные GET/POST-функции и подключить `useDashboardDemo` к backend. Не переносить расчёты XP, уровней, наград или урона во frontend.
