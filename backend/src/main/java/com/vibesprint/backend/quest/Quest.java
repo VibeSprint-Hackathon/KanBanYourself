@@ -61,4 +61,11 @@ public class Quest {
     public String getExternalReference() {
         return externalReference;
     }
+
+    public void complete() {
+        if (status == QuestStatus.DONE) {
+            throw new IllegalStateException("Quest is already completed");
+        }
+        status = QuestStatus.DONE;
+    }
 }

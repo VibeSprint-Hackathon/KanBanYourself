@@ -3,7 +3,7 @@ spring:
     name: backend
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vibesprint}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:55432/vibesprint}
     username: ${SPRING_DATASOURCE_USERNAME:vibesprint}
     password: ${SPRING_DATASOURCE_PASSWORD:vibesprint}
 

@@ -32,4 +32,11 @@ public class Player {
     public int getTotalXp() {
         return totalXp;
     }
+
+    public void addXp(int xp) {
+        if (xp <= 0) {
+            throw new IllegalArgumentException("XP gain must be positive");
+        }
+        totalXp = Math.addExact(totalXp, xp);
+    }
 }

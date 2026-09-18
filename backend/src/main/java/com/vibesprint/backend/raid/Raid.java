@@ -39,4 +39,11 @@ public class Raid {
     public int getCurrentHp() {
         return currentHp;
     }
+
+    public void applyDamage(int damage) {
+        if (damage <= 0) {
+            throw new IllegalArgumentException("Raid damage must be positive");
+        }
+        currentHp = Math.max(0, currentHp - damage);
+    }
 }

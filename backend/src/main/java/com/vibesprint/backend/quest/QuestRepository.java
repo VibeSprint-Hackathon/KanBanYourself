@@ -13,6 +13,8 @@ public interface QuestRepository extends JpaRepository<Quest, Long> {
 
     List<Quest> findAllByOrderByIdAsc();
 
+    boolean existsByStatus(QuestStatus status);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select quest from Quest quest where quest.id = :id")
     Optional<Quest> findByIdForUpdate(@Param("id") Long id);
