@@ -1,1 +1,139 @@
-// app global css
+:root {
+  --ink: #142b3c;
+  --muted: #59758d;
+  --blue: #19a6d5;
+  --orange: #e78a00;
+  --red: #ed5a4e;
+  --green: #329c70;
+  --border: #b2cfe1;
+  --card: #f4fbff;
+}
+
+body {
+  color: var(--ink);
+  background: #e4f2fc;
+  font-family: 'Roboto', sans-serif;
+}
+.dashboard-layout {
+  background-image:
+    linear-gradient(#8ebed21a 1px, transparent 1px),
+    linear-gradient(90deg, #8ebed21a 1px, transparent 1px);
+  background-size: 54px 54px;
+}
+.dashboard-sidebar {
+  background: #eef8ff;
+  border-color: var(--border) !important;
+}
+.dashboard-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 5px 14px #385b7410;
+}
+.dashboard-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+}
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.muted {
+  color: var(--muted);
+}
+.blue {
+  color: var(--blue);
+}
+.orange {
+  color: var(--orange);
+}
+.red {
+  color: var(--red);
+}
+.green {
+  color: var(--green);
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.3px;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+.status-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #009fc9;
+  flex-shrink: 0;
+}
+.green-dot {
+  background: var(--green);
+  width: 9px;
+  height: 9px;
+}
+.quest-badge {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 5px 12px;
+  color: #00a2d8;
+  background: #dff3fc;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.quest-badge.completed {
+  color: var(--green);
+  background: #dcefe8;
+}
+.progress-track {
+  color: var(--blue);
+  background: #d1e6f1;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.progress-track .q-linear-progress__track {
+  opacity: 0;
+}
+.progress-track .q-linear-progress__model {
+  border-radius: 3px;
+}
+.xp-progress {
+  color: #de8900;
+}
+.hp-progress {
+  color: #e45b4e;
+  padding: 2px;
+  border-color: #f6c9c6;
+}
+.hp-progress .q-linear-progress__model {
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+}
+.quest-dialog .q-dialog__inner {
+  padding: 0;
+}
+.quest-dialog .q-dialog__backdrop {
+  background: #17364840;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-track .q-linear-progress__model {
+    transition: none;
+  }
+}
