@@ -3,11 +3,13 @@ import { computed, nextTick, ref } from 'vue';
 import { mdiGithub, mdiPulse } from '@quasar/extras/mdi-v7';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
 import { useDashboardDemo } from '@/composables/useDashboardDemo';
+import { useCurrentDateTime } from '@/composables/useCurrentDateTime';
 import PlayerCard from '@/components/dashboard/PlayerCard.vue';
 import RaidBossCard from '@/components/dashboard/RaidBossCard.vue';
 import ActiveQuestCard from '@/components/dashboard/ActiveQuestCard.vue';
 import QuestDetailsDrawer from '@/components/dashboard/QuestDetailsDrawer.vue';
 const questOpen = ref(false);
+const { dateLabel, timeLabel } = useCurrentDateTime();
 const {
   state,
   selectedPlayer,
@@ -67,8 +69,8 @@ async function handleCompleteQuest() {
             :class="realtimeStatus === 'connected' ? 'green' : 'orange'"
           />{{ realtimeStatus === 'connected' ? 'Live sync' : 'Sync offline' }}</span
         ><span class="header-time"
-          ><span class="muted">{{ view.dateLabel }}</span
-          >{{ view.timeLabel }}</span
+          ><span class="muted">{{ dateLabel }}</span
+          >{{ timeLabel }}</span
         >
       </div>
     </header>

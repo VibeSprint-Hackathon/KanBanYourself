@@ -145,8 +145,9 @@ onUnmounted(() => {
         :cosmetic-key="cosmeticKey"
         :level="level"
       />
-      <div class="pip-status">
-        {{ reaction ? 'Quest complete!' : persistentState === 'coding' ? 'Coding' : 'Idle' }}
+      <div class="pip-player">
+        <strong class="pip-player__name">{{ name }}</strong>
+        <span class="pip-player__level">LVL {{ level }}</span>
       </div>
     </main>
   </Teleport>
@@ -176,13 +177,35 @@ onUnmounted(() => {
   width: 100%;
   min-height: 0;
 }
-.pip-status {
+.pip-player {
   align-self: center;
-  color: #527183;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  text-align: center;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 10px;
+}
+.pip-player__name {
+  min-width: 0;
+  overflow: hidden;
+  color: #17364a;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pip-player__level {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid #7fcbe5;
+  border-radius: 999px;
+  background: #d9f3fc;
+  color: #087ca3;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  line-height: 1;
 }
 </style>

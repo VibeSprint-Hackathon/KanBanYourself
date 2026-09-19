@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { mdiClose, mdiMagnify, mdiPlus, mdiTuneVariant } from '@quasar/extras/mdi-v7';
 import type { ProgressionResult } from '@/api/demo.types';
 import { useQuestBoard } from '@/composables/useQuestBoard';
+import { useCurrentDateTime } from '@/composables/useCurrentDateTime';
 import { dashboardPresentation as header } from '@/fixtures/dashboard.fixture';
 import {
   columnVisuals,
@@ -17,6 +18,7 @@ import BoardSettingsDialog from '@/components/quests/BoardSettingsDialog.vue';
 import QuestDetailsDrawer from '@/components/dashboard/QuestDetailsDrawer.vue';
 
 const board = useQuestBoard();
+const { dateLabel, timeLabel } = useCurrentDateTime();
 const {
   state,
   quests,
@@ -176,7 +178,7 @@ function completionAnnouncement(progression: ProgressionResult): string {
           {{ realtimeStatus === 'connected' ? 'Live sync' : 'Sync offline' }}
         </span>
         <span class="header-time"
-          >{{ header.dateLabel }} <span>{{ header.timeLabel }}</span></span
+          >{{ dateLabel }} <span>{{ timeLabel }}</span></span
         >
       </div>
     </header>

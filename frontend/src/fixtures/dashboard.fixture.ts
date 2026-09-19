@@ -9,8 +9,6 @@ export interface QuestPresentation {
 // Presentation-only data. Domain state is always loaded from the backend.
 export const dashboardPresentation = {
   sprintLabel: 'Sprint 04 · Day 12',
-  dateLabel: '18 SEP',
-  timeLabel: '20:44',
   player: {
     subtitle: 'Full-stack runner',
     status: 'Player ready',
