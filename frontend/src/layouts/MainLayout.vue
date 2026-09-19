@@ -98,10 +98,7 @@ function clearReactionTimer(): void {
     >
       <aside class="sidebar-content">
         <div class="brand">
-          <span class="brand-mark"
-            ><q-icon name="hexagon" size="46px" /><span>&lt;/&gt;</span></span
-          >
-          <div><strong>VibeSprint</strong><span class="brand-subtitle">Developer RPG</span></div>
+          <div><strong>KanBanYourself</strong><span class="brand-subtitle">Developer RPG</span></div>
         </div>
         <nav aria-label="Main navigation">
           <q-list
