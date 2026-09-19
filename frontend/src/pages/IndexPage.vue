@@ -12,6 +12,7 @@ const {
   state,
   view,
   quest: activeQuest,
+  characterState,
   reaction,
   toast,
   loading,
@@ -91,6 +92,7 @@ async function handleCompleteQuest() {
           :player="state.player"
           :next-unlock="state.nextUnlock"
           :presentation="view.player"
+          :character-state="characterState"
           :reaction="reaction"
         /><RaidBossCard v-if="state.raid" :raid="state.raid" :presentation="view.raid" />
         <q-card v-else flat bordered class="dashboard-card no-raid-card">
