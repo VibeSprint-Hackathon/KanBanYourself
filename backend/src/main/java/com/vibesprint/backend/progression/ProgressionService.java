@@ -1,5 +1,7 @@
 package com.vibesprint.backend.progression;
 
+import com.vibesprint.backend.achievement.AchievementService;
+import com.vibesprint.backend.achievement.AchievementUnlock;
 import com.vibesprint.backend.player.Player;
 import com.vibesprint.backend.player.PlayerRepository;
 import com.vibesprint.backend.quest.Quest;
@@ -11,6 +13,8 @@ import com.vibesprint.backend.raid.RaidStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class ProgressionService {
 
@@ -18,17 +22,20 @@ public class ProgressionService {
     private final PlayerRepository playerRepository;
     private final RaidRepository raidRepository;
     private final ProgressionRules progressionRules;
+    private final AchievementService achievementService;
 
     public ProgressionService(
             QuestRepository questRepository,
             PlayerRepository playerRepository,
             RaidRepository raidRepository,
-            ProgressionRules progressionRules
+            ProgressionRules progressionRules,
+            AchievementService achievementService
     ) {
         this.questRepository = questRepository;
         this.playerRepository = playerRepository;
         this.raidRepository = raidRepository;
         this.progressionRules = progressionRules;
+        this.achievementService = achievementService;
     }
 
     @Transactional
@@ -69,6 +76,15 @@ public class ProgressionService {
         CosmeticUnlock unlockedCosmetic = progressionRules
                 .unlockedCosmetic(previousXp, player.getTotalXp())
                 .orElse(null);
+        boolean bossDefeated = raid != null && raid.getStatus() == RaidStatus.COMPLETED;
+        List<AchievementUnlock> unlockedAchievements = achievementService.applyQuestCompletion(
+                player,
+                xpGained,
+                raidDamage,
+                levelUp,
+                bossDefeated,
+                command.source()
+        );
 
         return createResult(
                 command.eventId(),
@@ -79,6 +95,7 @@ public class ProgressionService {
                 levelUp,
                 unlockedCosmetic,
                 levelUp ? ProgressionResult.Reaction.LEVEL_UP : ProgressionResult.Reaction.HAPPY,
+                unlockedAchievements,
                 quest,
                 player,
                 currentProgress,
@@ -101,6 +118,7 @@ public class ProgressionService {
                 false,
                 null,
                 null,
+                List.of(),
                 quest,
                 player,
                 progressionRules.describe(player.getTotalXp()),
@@ -117,6 +135,7 @@ public class ProgressionService {
             boolean levelUp,
             CosmeticUnlock unlockedCosmetic,
             ProgressionResult.Reaction reaction,
+            List<AchievementUnlock> unlockedAchievements,
             Quest quest,
             Player player,
             ProgressionRules.PlayerProgress playerProgress,
@@ -135,6 +154,7 @@ public class ProgressionService {
                 unlockedCosmetic,
                 reaction,
                 bossDefeated,
+                unlockedAchievements,
                 new ProgressionResult.QuestSnapshot(
                         quest.getId(),
                         quest.getTitle(),

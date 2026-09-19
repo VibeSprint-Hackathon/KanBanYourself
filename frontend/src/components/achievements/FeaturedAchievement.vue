@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { mdiCheck } from '@quasar/extras/mdi-v7';
-import { achievementRewardLabel, type Achievement } from './achievement.types';
+import { mdiCheck, mdiLockOutline } from '@quasar/extras/mdi-v7';
+import type { Achievement } from './achievement.types';
 
 defineProps<{ achievement: Achievement }>();
-defineEmits<{ open: [id: number] }>();
+defineEmits<{ open: [key: string] }>();
 </script>
 
 <template>
@@ -14,9 +14,9 @@ defineEmits<{ open: [id: number] }>();
     role="button"
     tabindex="0"
     :aria-label="`Open achievement: ${achievement.name}`"
-    @click="$emit('open', achievement.id)"
-    @keydown.enter.prevent="$emit('open', achievement.id)"
-    @keydown.space.prevent="$emit('open', achievement.id)"
+    @click="$emit('open', achievement.key)"
+    @keydown.enter.prevent="$emit('open', achievement.key)"
+    @keydown.space.prevent="$emit('open', achievement.key)"
   >
     <div class="featured-icon">
       <span class="featured-icon-box"><q-icon :name="achievement.icon" size="24px" /></span>
@@ -27,9 +27,12 @@ defineEmits<{ open: [id: number] }>();
       <p>{{ achievement.description }}</p>
     </div>
     <div class="featured-reward">
-      <div class="unlocked-label"><q-icon :name="mdiCheck" size="18px" /> Unlocked</div>
+      <div class="unlocked-label" :class="{ locked: !achievement.unlocked }">
+        <q-icon :name="achievement.unlocked ? mdiCheck : mdiLockOutline" size="18px" />
+        {{ achievement.unlocked ? 'Unlocked' : `${achievement.currentProgress} / ${achievement.targetProgress}` }}
+      </div>
       <span class="eyebrow orange">Reward</span>
-      <strong>{{ achievementRewardLabel(achievement.reward) }}</strong>
+      <strong>{{ achievement.rewardLabel }}</strong>
     </div>
   </q-card>
 </template>
@@ -101,6 +104,9 @@ p {
   color: var(--green);
   font-size: 13px;
   font-weight: 600;
+}
+.unlocked-label.locked {
+  color: var(--muted);
 }
 .featured-reward strong {
   margin-top: 7px;

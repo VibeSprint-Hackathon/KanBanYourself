@@ -11,6 +11,7 @@ HTTP API для Dashboard, доски и управления Raid. Базовы
 | `GET /api/health`                     |   200 | Проверка запуска                   |
 | `GET /api/demo/state`                 |   200 | Полный снимок демо                 |
 | `GET /api/players`                    |   200 | Упорядоченный список игроков       |
+| `GET /api/players/{id}/achievements`  |   200 | Достижения одного игрока           |
 | `POST /api/demo/reset`                |   200 | Восстановление точного seed        |
 | `POST /api/demo/quests`               |   201 | Создание Квеста                    |
 | `PUT /api/demo/quests/{id}`           |   200 | Обновление Квеста                  |
@@ -153,6 +154,14 @@ Activation не заменяет текущий Raid молча и возвра�
 
 ## Reset и realtime
 
-`POST /api/demo/reset` атомарно удаляет пользовательские изменения, восстанавливает трёх игроков, распределённые Квесты, один `ACTIVE`, один `DRAFT` и sequence на 1000.
+`POST /api/demo/reset` атомарно удаляет пользовательские изменения и прогресс достижений, восстанавливает трёх игроков, распределённые Квесты, один `ACTIVE`, один `DRAFT` и sequence на 1000.
 
-STOMP подключается к `/ws`, topic — `/topic/progression`. Публикуется только применённый `ProgressionResponse`; повтор и reset событий не создают. REST остаётся обязательным источником полного состояния.
+STOMP подключается к `/ws`, topic — `/topic/progression`. Публикуется только применённый `ProgressionResponse`; повтор и reset событий не создают. Поле `unlockedAchievements` содержит только достижения, впервые открытые этим событием. REST остаётся обязательным источником полного состояния.
+
+## Достижения
+
+### `GET /api/players/{playerId}/achievements`
+
+Возвращает `playerId`, счётчики `unlocked`/`total` и каталог из 10 элементов. Каждый элемент содержит `key`, `name`, `description`, `category`, `currentProgress`, `targetProgress`, `unlocked`, nullable `unlockedAt`, `rewardLabel` и `featured`. Неизвестный игрок возвращает `404 PLAYER_NOT_FOUND`.
+
+Прогресс принадлежит игроку и сохраняется в PostgreSQL. Только новое завершение Квеста может увеличить счётчики Квестов и XP, отметить level up, Raid damage/finishing blow и источник `GITHUB`. Progress ограничен target, а `unlockedAt` после открытия не меняется. Badge-награды являются отображаемыми метаданными и не начисляют дополнительный XP.

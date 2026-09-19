@@ -81,6 +81,7 @@ class RealtimeWebSocketIntegrationTests {
                 null,
                 "level-up",
                 true,
+                java.util.List.of(),
                 null,
                 null,
                 null,

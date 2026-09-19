@@ -55,6 +55,7 @@ class ProgressionRealtimePublisherTests {
                 null,
                 applied ? "level-up" : null,
                 applied,
+                java.util.List.of(),
                 null,
                 null,
                 null,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { mdiCheck, mdiLockOutline } from '@quasar/extras/mdi-v7';
-import { achievementProgress, achievementRewardLabel, type Achievement } from './achievement.types';
+import { achievementProgress, type Achievement } from './achievement.types';
 
 const open = defineModel<boolean>({ required: true });
 defineProps<{ achievement: Achievement }>();
@@ -59,7 +59,7 @@ defineProps<{ achievement: Achievement }>();
         </section>
         <div class="reward-box spread">
           <span class="eyebrow orange">Reward</span>
-          <strong>{{ achievementRewardLabel(achievement.reward) }}</strong>
+          <strong>{{ achievement.rewardLabel }}</strong>
         </div>
         <div v-if="achievement.unlockedAt" class="unlocked-date spread">
           <span class="eyebrow muted">Unlocked</span><strong>{{ achievement.unlockedAt }}</strong>

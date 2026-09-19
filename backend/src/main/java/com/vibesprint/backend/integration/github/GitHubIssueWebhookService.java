@@ -142,6 +142,7 @@ public class GitHubIssueWebhookService {
                 null,
                 null,
                 false,
+                java.util.List.of(),
                 null,
                 null,
                 null,

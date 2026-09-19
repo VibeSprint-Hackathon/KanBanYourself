@@ -11,6 +11,7 @@ import {
 } from '@quasar/extras/mdi-v7';
 import { dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
 import RaidDamageNotification from '@/components/raids/RaidDamageNotification.vue';
+import AchievementUnlockNotification from '@/components/achievements/AchievementUnlockNotification.vue';
 import { useDemoStore } from '@/stores/demo';
 
 const route = useRoute();
@@ -102,6 +103,7 @@ const navigation = [
     </q-drawer>
     <q-page-container><router-view /></q-page-container>
     <RaidDamageNotification />
+    <AchievementUnlockNotification />
   </q-layout>
 </template>
 

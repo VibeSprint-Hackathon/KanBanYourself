@@ -90,6 +90,14 @@ export interface CosmeticUnlock {
   displayName: string;
 }
 
+export interface AchievementUnlock {
+  key: string;
+  name: string;
+  description: string;
+  category: 'QUEST' | 'XP' | 'LEVEL' | 'RAID' | 'GITHUB';
+  rewardLabel: string;
+}
+
 export interface ApiError {
   code: string;
   message: string;
@@ -105,6 +113,7 @@ export interface ProgressionResult {
   unlockedCosmetic: CosmeticUnlock | null;
   reaction: CharacterReaction | null;
   bossDefeated: boolean;
+  unlockedAchievements: AchievementUnlock[];
   quest: Quest;
   player: Player;
   raid: Raid | null;

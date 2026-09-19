@@ -32,6 +32,15 @@ public class DemoApiMapper {
                 toCosmetic(result.unlockedCosmetic()),
                 reactionValue(result.reaction()),
                 result.bossDefeated(),
+                result.unlockedAchievements().stream()
+                        .map(unlock -> new ProgressionResponse.AchievementUnlockView(
+                                unlock.key().name(),
+                                unlock.name(),
+                                unlock.description(),
+                                unlock.category().name(),
+                                unlock.rewardLabel()
+                        ))
+                        .toList(),
                 toQuest(result.quest()),
                 toPlayer(result.player()),
                 toRaid(result.raid()),
