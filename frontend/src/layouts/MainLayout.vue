@@ -7,11 +7,13 @@ import {
   mdiViewDashboardOutline,
 } from '@quasar/extras/mdi-v7';
 import { demoState, dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
+import { useRoute } from 'vue-router';
+const route = useRoute();
 const navigation = [
-  { label: 'Dashboard', icon: mdiViewDashboardOutline, active: true },
-  { label: 'Quests', icon: mdiBookOpenPageVariantOutline, active: false },
-  { label: 'Raids', icon: mdiSwordCross, active: false },
-  { label: 'Achievements', icon: mdiTrophyOutline, active: false },
+  { label: 'Dashboard', icon: mdiViewDashboardOutline, to: '/' },
+  { label: 'Quests', icon: mdiBookOpenPageVariantOutline, to: '/quests' },
+  { label: 'Raids', icon: mdiSwordCross, to: undefined },
+  { label: 'Achievements', icon: mdiTrophyOutline, to: undefined },
 ];
 </script>
 
@@ -37,10 +39,11 @@ const navigation = [
             ><q-item
               v-for="item in navigation"
               :key="item.label"
-              :to="item.active ? '/' : undefined"
-              :active="item.active"
-              :aria-disabled="!item.active || undefined"
-              :aria-current="item.active ? 'page' : undefined"
+              :to="item.to"
+              exact
+              :active="item.to === route.path"
+              :aria-disabled="!item.to || undefined"
+              :aria-current="item.to === route.path ? 'page' : undefined"
               class="nav-item"
               ><q-item-section avatar><q-icon :name="item.icon" size="21px" /></q-item-section
               ><q-item-section>{{ item.label }}</q-item-section></q-item

@@ -1,13 +1,30 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { Quest } from '@/api/demo.types';
+import { safeReferenceUrl } from '@/components/quests/board.types';
 import {
   formatNumber,
   questStatusLabels,
   type QuestPresentation,
 } from '@/fixtures/dashboard.fixture';
 const open = defineModel<boolean>({ required: true });
-defineProps<{ quest: Quest; presentation: QuestPresentation }>();
-defineEmits<{ complete: [] }>();
+const props = withDefaults(
+  defineProps<{
+    quest: Quest;
+    presentation: QuestPresentation;
+    mode?: 'dashboard' | 'board';
+    statusLabel?: string;
+    completed?: boolean;
+    showProgress?: boolean;
+    statusColor?: string;
+  }>(),
+  { mode: 'dashboard', showProgress: true },
+);
+defineEmits<{ complete: []; edit: []; delete: [] }>();
+const isCompleted = computed(() =>
+  props.mode === 'board' ? props.completed : props.quest.status === 'DONE',
+);
+const referenceUrl = computed(() => safeReferenceUrl(props.quest.externalReference));
 </script>
 
 <template>
@@ -37,15 +54,18 @@ defineEmits<{ complete: [] }>();
       <div class="drawer-body">
         <div class="spread">
           <span class="eyebrow muted">Status</span
-          ><span class="quest-badge" :class="{ completed: quest.status === 'DONE' }"
-            >● {{ questStatusLabels[quest.status] }}</span
+          ><span
+            class="quest-badge"
+            :class="{ completed: isCompleted }"
+            :style="statusColor ? { color: statusColor } : undefined"
+            >● {{ statusLabel ?? questStatusLabels[quest.status] }}</span
           >
         </div>
         <section>
           <h3 class="eyebrow muted">Description</h3>
           <p>{{ presentation.description }}</p>
         </section>
-        <section>
+        <section v-if="showProgress">
           <div class="spread">
             <h3 class="eyebrow muted">Progress</h3>
             <strong class="blue">{{ presentation.progressPercent }}%</strong>
@@ -60,16 +80,21 @@ defineEmits<{ complete: [] }>();
         <div class="drawer-reward spread orange">
           <span class="eyebrow">Reward</span><strong>+{{ formatNumber(quest.xpReward) }} XP</strong>
         </div>
-        <section>
+        <section v-if="quest.externalReference || presentation.pullRequestLabel">
           <h3 class="eyebrow muted">GitHub</h3>
           <p class="linked-label">Linked pull request</p>
           <div class="pull-request">
-            <q-icon name="merge" size="17px" class="green" />{{ presentation.pullRequestLabel }}
+            <q-icon name="merge" size="17px" class="green" />
+            <a v-if="referenceUrl" :href="referenceUrl" target="_blank" rel="noopener noreferrer">{{
+              quest.externalReference
+            }}</a>
+            <span v-else>{{ presentation.pullRequestLabel || quest.externalReference }}</span>
           </div>
         </section>
       </div>
       <footer class="drawer-footer">
         <q-btn
+          v-if="mode === 'dashboard'"
           unelevated
           no-caps
           class="complete-button"
@@ -77,6 +102,16 @@ defineEmits<{ complete: [] }>();
           aria-label="Complete Quest"
           @click="$emit('complete')"
         />
+        <template v-else>
+          <q-btn
+            unelevated
+            no-caps
+            class="complete-button"
+            label="Edit Quest"
+            @click="$emit('edit')"
+          />
+          <q-btn flat no-caps class="red" label="Delete Quest" @click="$emit('delete')" />
+        </template>
         <q-btn flat no-caps class="drawer-close" label="Close" @click="open = false" />
       </footer>
     </q-card>
@@ -158,6 +193,11 @@ section .linked-label {
   align-items: center;
   font: 13px monospace;
   color: var(--muted);
+}
+.pull-request a,
+.pull-request span {
+  overflow-wrap: anywhere;
+  color: inherit;
 }
 .drawer-footer {
   padding: 22px 27px;
