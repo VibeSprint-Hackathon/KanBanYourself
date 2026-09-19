@@ -12,6 +12,7 @@ import com.vibesprint.backend.quest.QuestRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,6 +23,7 @@ public class GitHubIssueWebhookService {
     private final QuestRepository questRepository;
     private final ProgressionService progressionService;
     private final DemoApiMapper mapper;
+    private final GitHubIssueService githubIssueService;
     private final Set<String> processedDeliveries = ConcurrentHashMap.newKeySet();
     private final String acceptedRepository;
 
@@ -29,11 +31,13 @@ public class GitHubIssueWebhookService {
             QuestRepository questRepository,
             ProgressionService progressionService,
             DemoApiMapper mapper,
+            GitHubIssueService githubIssueService,
             @Value("${app.github.repository:VibeSprint-Hackathon/KanBanYourself}") String acceptedRepository
     ) {
         this.questRepository = questRepository;
         this.progressionService = progressionService;
         this.mapper = mapper;
+        this.githubIssueService = githubIssueService;
         this.acceptedRepository = acceptedRepository;
     }
 
@@ -54,8 +58,9 @@ public class GitHubIssueWebhookService {
         }
 
         String action = asString(payload, "action");
-        if (!"closed".equalsIgnoreCase(action)) {
-            throw new InvalidProgressionCommandException("Only closed GitHub issues are supported");
+        Set<String> supportedActions = Set.of("opened", "reopened", "edited", "labeled", "unlabeled", "assigned", "unassigned", "closed");
+        if (!supportedActions.contains(action == null ? "" : action.toLowerCase())) {
+            throw new InvalidProgressionCommandException("Unsupported GitHub issue action: " + action);
         }
 
         String issueUrl = normalizeIssueUrl(issueNode, payload);
@@ -68,13 +73,33 @@ public class GitHubIssueWebhookService {
             throw new InvalidProgressionCommandException("Only issues from repository " + acceptedRepository + " are accepted");
         }
 
-        Quest linkedQuest = questRepository.findByExternalReference(issueUrl)
-                .orElseThrow(() -> new InvalidProgressionCommandException("No quest is linked to GitHub issue " + issueUrl));
+        if ("closed".equalsIgnoreCase(action)) {
+            Quest linkedQuest = questRepository.findByExternalReference(issueUrl)
+                    .orElseThrow(() -> new InvalidProgressionCommandException("No quest is linked to GitHub issue " + issueUrl));
 
-        ProgressionResult result = progressionService.completeQuest(
-                new CompleteQuestCommand(linkedQuest.getId(), deliveryId, ProgressionSource.GITHUB)
+            ProgressionResult result = progressionService.completeQuest(
+                    new CompleteQuestCommand(linkedQuest.getId(), deliveryId, ProgressionSource.GITHUB)
+            );
+            return mapper.toResponse(result, "GITHUB", false);
+        }
+
+        githubIssueService.syncIssuesToBoard(List.of(toIssueResponse(issueNode, payload)));
+        return new ProgressionResponse(
+                deliveryId,
+                true,
+                "GITHUB_SYNC",
+                0,
+                0,
+                false,
+                null,
+                "updated",
+                false,
+                null,
+                null,
+                null,
+                "GITHUB",
+                false
         );
-        return mapper.toResponse(result, "GITHUB", false);
     }
 
     private String normalizeIssueUrl(Map<String, Object> issueNode, Map<String, Object> payload) {
@@ -129,6 +154,70 @@ public class GitHubIssueWebhookService {
         }
         Object value = source.get(key);
         return value == null ? null : value.toString();
+    }
+
+    private GitHubIssueResponse toIssueResponse(Map<String, Object> issueNode, Map<String, Object> payload) {
+        Map<String, Object> repositoryNode = asMap(issueNode.get("repository"));
+        String repositoryName = repositoryNode == null ? null : asString(repositoryNode, "full_name");
+        if (repositoryName == null || repositoryName.isBlank()) {
+            Map<String, Object> rootRepositoryNode = asMap(payload == null ? null : payload.get("repository"));
+            repositoryName = rootRepositoryNode == null ? acceptedRepository : asString(rootRepositoryNode, "full_name");
+        }
+
+        Map<String, Object> assigneeNode = asMap(issueNode.get("assignee"));
+        String assigneeLogin = assigneeNode == null ? null : asString(assigneeNode, "login");
+
+        return new GitHubIssueResponse(
+                asLong(issueNode.get("id")),
+                asInt(issueNode.get("number")),
+                asString(issueNode, "title"),
+                asString(issueNode, "state"),
+                asString(issueNode, "url"),
+                asString(issueNode, "html_url"),
+                repositoryName == null ? acceptedRepository : repositoryName,
+                asString(issueNode, "body"),
+                assigneeLogin,
+                extractLabels(issueNode.get("labels"))
+        );
+    }
+
+    private List<String> extractLabels(Object labelsValue) {
+        if (!(labelsValue instanceof java.util.List<?> labelsList)) {
+            return java.util.List.of();
+        }
+
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        for (Object item : labelsList) {
+            if (item instanceof Map<?, ?> map) {
+                Object name = map.get("name");
+                if (name != null) {
+                    labels.add(name.toString());
+                }
+            } else if (item != null) {
+                labels.add(item.toString());
+            }
+        }
+        return labels;
+    }
+
+    private long asLong(Object value) {
+        if (value == null) {
+            return 0L;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.parseLong(value.toString());
+    }
+
+    private int asInt(Object value) {
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        return Integer.parseInt(value.toString());
     }
 
     private ProgressionResponse duplicateResponse(String deliveryId) {

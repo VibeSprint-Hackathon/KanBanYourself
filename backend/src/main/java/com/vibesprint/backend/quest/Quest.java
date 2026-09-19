@@ -110,6 +110,13 @@ public class Quest {
         return sortOrder;
     }
 
+    public void assignTo(Player assignee) {
+        if (assignee == null) {
+            throw new IllegalArgumentException("Assignee cannot be null");
+        }
+        this.assignee = assignee;
+    }
+
     public void updateEditableFields(String title, String description, String externalReference) {
         this.title = title;
         this.description = description;
@@ -151,8 +158,8 @@ public class Quest {
         if (status == QuestStatus.DONE) {
             throw new IllegalStateException("Quest is already completed");
         }
-        status = QuestStatus.DONE;
-        progress = 100;
+        this.status = QuestStatus.DONE;
+        this.progress = 100;
         this.sortOrder = sortOrder;
     }
 }

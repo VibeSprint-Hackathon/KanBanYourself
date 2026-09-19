@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/003-quest-kanban.yaml
   - include:
       file: db/changelog/changes/004-raid-lifecycle.yaml
+  - include:
+      file: db/changelog/changes/005-github-sync-dedupe.yaml

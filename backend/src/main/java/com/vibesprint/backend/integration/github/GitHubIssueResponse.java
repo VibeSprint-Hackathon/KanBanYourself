@@ -11,6 +11,7 @@ public record GitHubIssueResponse(
         String htmlUrl,
         String repository,
         String body,
+        String assigneeLogin,
         List<String> labels
 ) {
 }

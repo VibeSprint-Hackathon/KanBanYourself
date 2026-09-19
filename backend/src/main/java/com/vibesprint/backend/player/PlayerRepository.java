@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface PlayerRepository extends JpaRepository<Player, Long> {
 
+    Optional<Player> findByName(String name);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select player from Player player where player.id = :id")
     Optional<Player> findByIdForUpdate(@Param("id") Long id);

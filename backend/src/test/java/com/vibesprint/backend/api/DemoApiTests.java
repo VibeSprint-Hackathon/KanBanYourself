@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.github.enabled=false")
 @AutoConfigureMockMvc
 @Transactional
 class DemoApiTests {
@@ -211,6 +211,45 @@ class DemoApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.quests[9].id").value(101))
                 .andExpect(jsonPath("$.quests[9].status").value("DONE"));
+    }
+
+    @Test
+    void syncsGithubIssueWhenLabelChanges() throws Exception {
+        jdbcTemplate.update(
+                "update quest set external_reference = ? where id = 101",
+                "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
+        );
+
+        String body = """
+                {
+                  "action": "labeled",
+                  "issue": {
+                    "number": 42,
+                    "state": "open",
+                    "title": "Updated issue",
+                    "body": "Body",
+                    "labels": [{"name": "in progress"}],
+                    "html_url": "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42",
+                    "assignee": {"login": "demo"}
+                  },
+                  "repository": {
+                    "full_name": "VibeSprint-Hackathon/KanBanYourself"
+                  }
+                }
+                """;
+
+        mockMvc.perform(post("/api/integrations/github/issues/webhook")
+                        .header("X-GitHub-Event", "issues")
+                        .header("X-GitHub-Delivery", "github-label-sync")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applied").value(true))
+                .andExpect(jsonPath("$.source").value("GITHUB"));
+
+        mockMvc.perform(get("/api/demo/state"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quests[?(@.id == 101)].status").value("IN_PROGRESS"));
     }
 
     @Test
