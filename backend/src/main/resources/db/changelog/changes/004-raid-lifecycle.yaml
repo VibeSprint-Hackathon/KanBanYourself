@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-raid-lifecycle
+      author: vibesprint
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE raid
+                ADD COLUMN description TEXT NOT NULL DEFAULT '',
+                ADD COLUMN status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+                ADD COLUMN external_reference VARCHAR(500);
+
+              UPDATE raid SET
+                description = 'Defeat the merge conflicts blocking the team sprint.',
+                status = CASE WHEN current_hp = 0 THEN 'COMPLETED' ELSE 'ACTIVE' END;
+
+              ALTER TABLE raid
+                ADD CONSTRAINT ck_raid_description_not_blank CHECK (btrim(description) <> ''),
+                ADD CONSTRAINT ck_raid_status CHECK (status IN ('DRAFT', 'ACTIVE', 'COMPLETED', 'CANCELLED')),
+                ADD CONSTRAINT ck_raid_hp_by_status CHECK (
+                  (status = 'DRAFT' AND current_hp = max_hp)
+                  OR (status = 'ACTIVE' AND current_hp > 0)
+                  OR (status = 'COMPLETED' AND current_hp = 0)
+                  OR (status = 'CANCELLED' AND current_hp BETWEEN 0 AND max_hp)
+                );
+
+              ALTER TABLE raid ALTER COLUMN description DROP DEFAULT;
+              ALTER TABLE raid ALTER COLUMN status DROP DEFAULT;
+              CREATE SEQUENCE raid_id_seq START WITH 1000 INCREMENT BY 1;
+              CREATE UNIQUE INDEX uq_raid_single_active ON raid (status) WHERE status = 'ACTIVE';
