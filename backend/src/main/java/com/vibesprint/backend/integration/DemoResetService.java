@@ -34,11 +34,15 @@ public class DemoResetService {
         jdbcTemplate.execute("alter sequence raid_id_seq restart with 1000");
 
         jdbcTemplate.update(
-                "insert into player (id, name, total_xp) values (?, ?, ?)",
+                "insert into player (id, name, total_xp, github_login, github_user_id) values (?, ?, ?, ?, ?)",
                 1L,
                 "Andrei",
-                920
+                920,
+                "amjastsov",
+                117397316L
         );
+        insertPlayer(2L, "Timofei", 640, "Beresnjev", 22981929L);
+        insertPlayer(3L, "Nikita", 360, "Parsifal22", 73550345L);
         insertQuest(
                 101L,
                 "Fix payment validation",
@@ -46,6 +50,7 @@ public class DemoResetService {
                 "IN_PROGRESS",
                 72,
                 180,
+                1L,
                 null,
                 100
         );
@@ -56,6 +61,7 @@ public class DemoResetService {
                 "TODO",
                 null,
                 120,
+                2L,
                 null,
                 100
         );
@@ -66,23 +72,24 @@ public class DemoResetService {
                 "DONE",
                 100,
                 80,
+                1L,
                 null,
                 100
         );
         insertQuest(104L, "Add keyboard shortcuts", "Speed up the command palette and common actions.",
-                "BACKLOG", null, 250, null, 100);
+                "BACKLOG", null, 250, 2L, null, 100);
         insertQuest(105L, "Improve loading states", "Make every wait feel clear and intentional.",
-                "BACKLOG", null, 180, null, 200);
+                "BACKLOG", null, 180, 3L, null, 200);
         insertQuest(106L, "Add achievement filters", "Find earned badges by category and rarity.",
-                "TODO", null, 320, null, 200);
+                "TODO", null, 320, 1L, null, 200);
         insertQuest(107L, "Add profile rewards", "Surface earned badges on the player profile.",
-                "TESTING", 35, 420, null, 100);
+                "TESTING", 35, 420, 3L, null, 100);
         insertQuest(108L, "Validate GitHub webhook", "Check event signatures and safe handling of retries.",
-                "TESTING", 90, 350, "#148 Webhook validation", 200);
+                "TESTING", 90, 350, 2L, "#148 Webhook validation", 200);
         insertQuest(109L, "Test level-up animation", "Review the reward moment and reduced motion state.",
-                "TESTING", 85, 280, null, 300);
+                "TESTING", 85, 280, 1L, null, 300);
         insertQuest(110L, "Connect GitHub", "Link commits and pull requests to Quest progress.",
-                "DONE", 100, 300, null, 200);
+                "DONE", 100, 300, 3L, null, 200);
         insertRaid(
                 201L,
                 "Merge Conflict Hydra",
@@ -113,6 +120,7 @@ public class DemoResetService {
             String status,
             Integer progress,
             int xpReward,
+            long assigneeId,
             String externalReference,
             int sortOrder
     ) {
@@ -128,9 +136,16 @@ public class DemoResetService {
                 status,
                 progress,
                 xpReward,
-                1L,
+                assigneeId,
                 externalReference,
                 sortOrder
+        );
+    }
+
+    private void insertPlayer(long id, String name, int totalXp, String githubLogin, long githubUserId) {
+        jdbcTemplate.update(
+                "insert into player (id, name, total_xp, github_login, github_user_id) values (?, ?, ?, ?, ?)",
+                id, name, totalXp, githubLogin, githubUserId
         );
     }
 

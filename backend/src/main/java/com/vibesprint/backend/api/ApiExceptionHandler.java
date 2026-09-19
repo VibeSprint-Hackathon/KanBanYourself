@@ -3,6 +3,7 @@ package com.vibesprint.backend.api;
 import com.vibesprint.backend.progression.DemoStateNotReadyException;
 import com.vibesprint.backend.progression.InvalidProgressionCommandException;
 import com.vibesprint.backend.progression.QuestNotFoundException;
+import com.vibesprint.backend.player.PlayerNotFoundException;
 import com.vibesprint.backend.quest.InvalidQuestRequestException;
 import com.vibesprint.backend.quest.QuestConflictException;
 import com.vibesprint.backend.raid.RaidConflictException;
@@ -38,6 +39,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(QuestNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> questNotFound(QuestNotFoundException exception) {
         return error(HttpStatus.NOT_FOUND, "QUEST_NOT_FOUND", exception.getMessage());
+    }
+
+    @ExceptionHandler(PlayerNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> playerNotFound(PlayerNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, "PLAYER_NOT_FOUND", exception.getMessage());
     }
 
     @ExceptionHandler(QuestConflictException.class)

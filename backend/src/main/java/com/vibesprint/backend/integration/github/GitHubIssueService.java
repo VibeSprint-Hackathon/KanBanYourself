@@ -114,6 +114,7 @@ public class GitHubIssueService {
                     status,
                     progress,
                     quest.getXpReward(),
+                    quest.getAssignee(),
                     externalReference,
                     nextSortOrder(status)
             );

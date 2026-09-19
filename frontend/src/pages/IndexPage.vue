@@ -10,6 +10,7 @@ import QuestDetailsDrawer from '@/components/dashboard/QuestDetailsDrawer.vue';
 const questOpen = ref(false);
 const {
   state,
+  selectedPlayer,
   view,
   quest: activeQuest,
   characterState,
@@ -89,8 +90,8 @@ async function handleCompleteQuest() {
       </div>
       <div class="dashboard-top">
         <PlayerCard
-          :player="state.player"
-          :next-unlock="state.nextUnlock"
+          v-if="selectedPlayer"
+          :player="selectedPlayer"
           :presentation="view.player"
           :character-state="characterState"
           :reaction="reaction"
@@ -108,6 +109,11 @@ async function handleCompleteQuest() {
           :presentation="questView"
           @open="questOpen = true"
         />
+        <q-card v-else flat bordered class="dashboard-card no-quest-card">
+          <q-icon name="task_alt" size="32px" class="blue" />
+          <h3>No active Quest</h3>
+          <p class="muted">This player has no Quest in progress.</p>
+        </q-card>
         <q-card flat bordered class="dashboard-card small-card"
           ><div class="spread small-card-top">
             <q-icon :name="mdiGithub" size="24px" /><span class="status-dot green-dot" />
@@ -133,6 +139,7 @@ async function handleCompleteQuest() {
         v-if="activeQuest && questView"
         v-model="questOpen"
         :quest="activeQuest"
+        :assignee="selectedPlayer ?? undefined"
         :presentation="questView"
         :completing="completingQuestId === activeQuest.id"
         @complete="handleCompleteQuest"
@@ -227,6 +234,19 @@ async function handleCompleteQuest() {
 .small-card {
   padding: 24px 22px;
   min-height: 224px;
+}
+.no-quest-card {
+  display: grid;
+  min-height: 224px;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+.no-quest-card h3 {
+  margin: 10px 0 4px;
+}
+.no-quest-card p {
+  margin: 0;
 }
 .no-raid-card {
   display: grid;

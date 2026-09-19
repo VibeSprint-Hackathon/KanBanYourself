@@ -7,7 +7,7 @@ import com.vibesprint.backend.api.MoveQuestRequest;
 import com.vibesprint.backend.api.UpdateQuestRequest;
 import com.vibesprint.backend.player.Player;
 import com.vibesprint.backend.player.PlayerRepository;
-import com.vibesprint.backend.progression.DemoStateNotReadyException;
+import com.vibesprint.backend.player.PlayerNotFoundException;
 import com.vibesprint.backend.progression.QuestNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +18,6 @@ import java.util.List;
 @Service
 public class QuestMutationService {
 
-    private static final long DEMO_PLAYER_ID = 1L;
     private static final int ORDER_STEP = 100;
 
     private final QuestRepository questRepository;
@@ -38,8 +37,7 @@ public class QuestMutationService {
     @Transactional
     public DemoStateResponse create(CreateQuestRequest request) {
         rejectDoneDestination(request.status());
-        Player assignee = playerRepository.findById(DEMO_PLAYER_ID)
-                .orElseThrow(() -> new DemoStateNotReadyException("Player " + DEMO_PLAYER_ID + " is not ready"));
+        Player assignee = findPlayer(request.assigneeId());
         Integer progress = normalizedProgress(request.status(), request.progress(), null);
         Quest quest = Quest.create(
                 request.title(),
@@ -58,8 +56,9 @@ public class QuestMutationService {
     @Transactional
     public DemoStateResponse update(long questId, UpdateQuestRequest request) {
         Quest quest = findForUpdate(questId);
+        Player assignee = findPlayer(request.assigneeId());
         if (quest.getStatus() == QuestStatus.DONE) {
-            updateCompleted(quest, request);
+            updateCompleted(quest, request, assignee);
             return stateQueryService.getState();
         }
 
@@ -75,6 +74,7 @@ public class QuestMutationService {
                 request.status(),
                 progress,
                 request.xpReward(),
+                assignee,
                 request.externalReference(),
                 sortOrder
         );
@@ -124,12 +124,15 @@ public class QuestMutationService {
         return stateQueryService.getState();
     }
 
-    private void updateCompleted(Quest quest, UpdateQuestRequest request) {
+    private void updateCompleted(Quest quest, UpdateQuestRequest request, Player assignee) {
         if (request.status() != QuestStatus.DONE) {
             throw new QuestConflictException("Completed Quest status cannot be changed");
         }
         if (request.xpReward() != quest.getXpReward()) {
             throw new QuestConflictException("Completed Quest XP reward cannot be changed");
+        }
+        if (!assignee.getId().equals(quest.getAssignee().getId())) {
+            throw new QuestConflictException("Completed Quest assignee cannot be changed");
         }
         normalizedProgress(QuestStatus.DONE, request.progress(), quest);
         quest.updateEditableFields(request.title(), request.description(), request.externalReference());
@@ -138,6 +141,11 @@ public class QuestMutationService {
     private Quest findForUpdate(long questId) {
         return questRepository.findByIdForUpdate(questId)
                 .orElseThrow(() -> new QuestNotFoundException(questId));
+    }
+
+    private Player findPlayer(long playerId) {
+        return playerRepository.findById(playerId)
+                .orElseThrow(() -> new PlayerNotFoundException(playerId));
     }
 
     private void rejectDoneDestination(QuestStatus status) {

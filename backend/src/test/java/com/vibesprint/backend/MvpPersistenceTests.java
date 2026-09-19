@@ -2,6 +2,7 @@ package com.vibesprint.backend;
 
 import com.vibesprint.backend.player.Player;
 import com.vibesprint.backend.player.PlayerRepository;
+import com.vibesprint.backend.integration.DemoResetService;
 import com.vibesprint.backend.quest.Quest;
 import com.vibesprint.backend.quest.QuestRepository;
 import com.vibesprint.backend.quest.QuestStatus;
@@ -9,6 +10,7 @@ import com.vibesprint.backend.raid.Raid;
 import com.vibesprint.backend.raid.RaidRepository;
 import com.vibesprint.backend.raid.RaidStatus;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +34,21 @@ class MvpPersistenceTests {
     @Autowired
     private RaidRepository raidRepository;
 
+    @Autowired
+    private DemoResetService resetService;
+
+    @BeforeEach
+    void resetDemo() {
+        resetService.reset();
+    }
+
     @Test
     void readsDeterministicMvpSeed() {
         Player player = playerRepository.findById(1L).orElseThrow();
         assertEquals("Andrei", player.getName());
         assertEquals(920, player.getTotalXp());
+        assertEquals("amjastsov", player.getGithubLogin());
+        assertEquals(3, playerRepository.count());
 
         List<Quest> quests = questRepository.findAllInBoardOrder();
         assertEquals(

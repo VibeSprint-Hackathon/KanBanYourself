@@ -47,6 +47,7 @@ class QuestKanbanApiTests {
                   "status":"BACKLOG",
                   "progress":null,
                   "xpReward":250,
+                  "assigneeId":1,
                   "externalReference":null
                 }
                 """;
@@ -64,6 +65,62 @@ class QuestKanbanApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.quests[2].id").value(1000))
                 .andExpect(jsonPath("$.quests[2].title").value("New backlog Quest"));
+    }
+
+    @Test
+    void exposesRosterAndCreatesQuestForChosenAssignee() throws Exception {
+        mockMvc.perform(get("/api/players"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[1].name").value("Timofei"))
+                .andExpect(jsonPath("$[1].githubLogin").value("Beresnjev"));
+
+        String create = """
+                {
+                  "title":"Timofei Quest",
+                  "description":"Assigned explicitly.",
+                  "status":"TODO",
+                  "progress":null,
+                  "xpReward":100,
+                  "assigneeId":2,
+                  "externalReference":null
+                }
+                """;
+        mockMvc.perform(post("/api/demo/quests").contentType("application/json").content(create))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.quests[4].assigneeId").value(2));
+    }
+
+    @Test
+    void rejectsUnknownAssigneeAndCompletedReassignment() throws Exception {
+        String unknown = questBody("Unknown owner", "TODO", "null", 100).replace(
+                "\"assigneeId\":1", "\"assigneeId\":999"
+        );
+        mockMvc.perform(post("/api/demo/quests").contentType("application/json").content(unknown))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("PLAYER_NOT_FOUND"));
+
+        String completed = questBody("Improve login error copy", "DONE", "100", 80).replace(
+                "\"assigneeId\":1", "\"assigneeId\":2"
+        );
+        mockMvc.perform(put("/api/demo/quests/103").contentType("application/json").content(completed))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("QUEST_CONFLICT"));
+    }
+
+    @Test
+    void awardsXpToQuestAssignee() throws Exception {
+        mockMvc.perform(post("/api/demo/quests/102/complete")
+                        .contentType("application/json")
+                        .content("{\"eventId\":\"timofei-xp\",\"source\":\"DEMO\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.player.id").value(2))
+                .andExpect(jsonPath("$.player.totalXp").value(760));
+
+        mockMvc.perform(get("/api/demo/state"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.players[0].totalXp").value(920))
+                .andExpect(jsonPath("$.players[1].totalXp").value(760));
     }
 
     @Test
@@ -93,6 +150,7 @@ class QuestKanbanApiTests {
                   "status":"BACKLOG",
                   "progress":null,
                   "xpReward":260,
+                  "assigneeId":2,
                   "externalReference":"https://github.com/example/repository/pull/42"
                 }
                 """;
@@ -137,6 +195,7 @@ class QuestKanbanApiTests {
                   "status":"DONE",
                   "progress":100,
                   "xpReward":80,
+                  "assigneeId":1,
                   "externalReference":"#completed"
                 }
                 """;
@@ -249,6 +308,7 @@ class QuestKanbanApiTests {
                   "status":"%s",
                   "progress":%s,
                   "xpReward":%d,
+                  "assigneeId":1,
                   "externalReference":null
                 }
                 """.formatted(title, status, progress, xpReward);

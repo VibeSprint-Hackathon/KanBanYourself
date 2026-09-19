@@ -3,6 +3,7 @@ import type {
   CreateQuestRequest,
   DemoState,
   MoveQuestRequest,
+  Player,
   ProgressionResult,
   UpdateQuestRequest,
 } from '@/api/demo.types';
@@ -16,6 +17,11 @@ export interface CompleteQuestCommand {
 
 export async function getDemoState(): Promise<DemoState> {
   const response = await api.get<DemoState>('/demo/state');
+  return response.data;
+}
+
+export async function getPlayers(): Promise<Player[]> {
+  const response = await api.get<Player[]>('/players');
   return response.data;
 }
 

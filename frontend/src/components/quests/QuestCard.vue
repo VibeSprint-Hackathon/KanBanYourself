@@ -3,8 +3,10 @@ import { computed } from 'vue';
 import { mdiCheck, mdiChevronRight, mdiDragVertical, mdiGithub } from '@quasar/extras/mdi-v7';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
 import { columnVisuals, displayedProgress, type BoardQuest } from './board.types';
+import type { Player } from '@/api/demo.types';
 const props = defineProps<{
   entry: BoardQuest;
+  assignee: Player | undefined;
   compact: boolean;
   dragDisabled: boolean;
   dragging: boolean;
@@ -53,6 +55,7 @@ const progress = computed(() => displayedProgress(props.entry));
         /><strong>{{ progress }}%</strong>
       </div>
       <div class="card-footer">
+        <span class="assignee"><q-avatar size="22px">{{ assignee?.name[0] ?? '?' }}</q-avatar>{{ assignee?.name ?? 'Unknown' }}</span>
         <strong class="orange">+{{ formatNumber(entry.quest.xpReward) }} XP</strong
         ><span class="status-label"
           ><q-icon v-if="entry.columnId === 'DONE'" :name="mdiCheck" size="16px" />{{
@@ -159,6 +162,17 @@ h3 {
   padding-top: 13px;
   border-top: 1px solid #c5dbe8;
   font-size: 13px;
+}
+.assignee {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.assignee .q-avatar {
+  color: var(--blue);
+  background: #cfe8f4;
 }
 .status-label {
   color: var(--column-accent);

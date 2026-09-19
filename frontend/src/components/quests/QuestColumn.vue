@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { mdiDotsHorizontal } from '@quasar/extras/mdi-v7';
 import QuestCard from './QuestCard.vue';
+import type { Player } from '@/api/demo.types';
 import { columnVisuals, type BoardColumn, type BoardQuest, type ColumnAction } from './board.types';
 const props = defineProps<{
   column: BoardColumn;
   quests: BoardQuest[];
+  players: Player[];
   compact: boolean;
   searching: boolean;
   dragId: number | null;
@@ -116,6 +118,7 @@ function drop(event: DragEvent) {
       >
         <QuestCard
           :entry="entry"
+          :assignee="players.find((player) => player.id === entry.quest.assigneeId)"
           :compact="compact"
           :drag-disabled="readOnly || searching || entry.columnId === 'DONE'"
           :dragging="dragId === entry.quest.id"

@@ -10,12 +10,13 @@ import {
   mdiViewDashboardOutline,
 } from '@quasar/extras/mdi-v7';
 import { dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
+import RaidDamageNotification from '@/components/raids/RaidDamageNotification.vue';
 import { useDemoStore } from '@/stores/demo';
 
 const route = useRoute();
 const demoStore = useDemoStore();
-const { state } = storeToRefs(demoStore);
-const playerName = computed(() => state.value?.player.name ?? 'Player');
+const { state, selectedPlayer } = storeToRefs(demoStore);
+const playerName = computed(() => selectedPlayer.value?.name ?? 'Player');
 const playerInitials = computed(() => {
   const initials = playerName.value
     .split(/\s+/)
@@ -67,17 +68,40 @@ const navigation = [
             ></q-list
           >
         </nav>
-        <div class="sidebar-player">
+        <div class="sidebar-player" role="button" tabindex="0" aria-label="Switch profile">
           <q-avatar rounded size="40px">{{ playerInitials }}</q-avatar>
           <div>
             <strong>{{ playerName }}</strong
             ><span>{{ view.player.sidebarStatus }}</span>
           </div>
           <q-icon :name="mdiCogOutline" size="19px" class="muted" />
+          <q-menu anchor="top right" self="bottom right">
+            <q-list style="min-width: 210px">
+              <q-item-label header>Demo profile</q-item-label>
+              <q-item
+                v-for="player in state?.players ?? []"
+                :key="player.id"
+                v-close-popup
+                clickable
+                :active="player.id === selectedPlayer?.id"
+                @click="demoStore.selectPlayer(player.id)"
+              >
+                <q-item-section avatar><q-avatar size="32px">{{ player.name[0] }}</q-avatar></q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ player.name }}</q-item-label>
+                  <q-item-label caption>@{{ player.githubLogin }}</q-item-label>
+                </q-item-section>
+                <q-item-section v-if="player.id === selectedPlayer?.id" side>
+                  <q-icon name="check" color="primary" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </div>
       </aside>
     </q-drawer>
     <q-page-container><router-view /></q-page-container>
+    <RaidDamageNotification />
   </q-layout>
 </template>
 
@@ -161,6 +185,7 @@ nav {
   border-top: 1px solid var(--border);
   padding-top: 23px;
   margin-top: auto;
+  cursor: pointer;
 }
 .sidebar-player .q-avatar {
   color: var(--blue);

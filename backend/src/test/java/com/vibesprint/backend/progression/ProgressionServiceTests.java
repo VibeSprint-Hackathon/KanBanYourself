@@ -1,15 +1,18 @@
 package com.vibesprint.backend.progression;
 
 import com.vibesprint.backend.player.PlayerRepository;
+import com.vibesprint.backend.integration.DemoResetService;
 import com.vibesprint.backend.quest.QuestRepository;
 import com.vibesprint.backend.quest.QuestStatus;
 import com.vibesprint.backend.raid.RaidRepository;
 import com.vibesprint.backend.raid.RaidStatus;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,6 +38,17 @@ class ProgressionServiceTests {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private DemoResetService resetService;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @BeforeEach
+    void resetDemo() {
+        resetService.reset();
+    }
 
     @Test
     void completesDemoQuestAndAppliesAllProgress() {
@@ -94,17 +108,18 @@ class ProgressionServiceTests {
 
         assertTrue(result.applied());
         assertEquals(120, result.xpGained());
-        assertEquals(1040, result.player().totalXp());
-        assertEquals(5, result.player().level());
+        assertEquals(760, result.player().totalXp());
+        assertEquals(4, result.player().level());
         assertEquals(60, result.raid().currentHp());
         assertFalse(result.bossDefeated());
-        assertEquals(ProgressionResult.CharacterState.CODING, result.player().characterState());
+        assertEquals(ProgressionResult.CharacterState.IDLE, result.player().characterState());
     }
 
     @Test
     void returnsHappyReactionAndClampsOverkillDamage() {
-        jdbcTemplate.update("update player set total_xp = 700 where id = 1");
+        jdbcTemplate.update("update player set total_xp = 700 where id = 2");
         jdbcTemplate.update("update raid set current_hp = 50 where id = 201");
+        entityManager.clear();
 
         ProgressionResult result = progressionService.completeQuest(command(102L, "overkill-102"));
 
@@ -146,6 +161,7 @@ class ProgressionServiceTests {
     @Test
     void doesNotDamageCancelledRaid() {
         jdbcTemplate.update("update raid set status = 'CANCELLED' where id = 201");
+        entityManager.clear();
 
         ProgressionResult result = progressionService.completeQuest(command(102L, "cancelled-raid"));
 

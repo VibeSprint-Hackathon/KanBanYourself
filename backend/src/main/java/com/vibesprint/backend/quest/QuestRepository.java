@@ -29,6 +29,8 @@ public interface QuestRepository extends JpaRepository<Quest, Long> {
 
     boolean existsByStatus(QuestStatus status);
 
+    boolean existsByAssigneeIdAndStatus(long assigneeId, QuestStatus status);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select quest from Quest quest where quest.id = :id")
     Optional<Quest> findByIdForUpdate(@Param("id") Long id);

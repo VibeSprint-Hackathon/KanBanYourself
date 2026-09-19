@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue';
 import { mdiClose } from '@quasar/extras/mdi-v7';
+import type { Player } from '@/api/demo.types';
 import {
   columnVisuals,
   validQuestForm,
@@ -13,6 +14,8 @@ const props = defineProps<{
   mode: 'create' | 'edit';
   entry: BoardQuest | null;
   columns: BoardColumn[];
+  players: Player[];
+  defaultAssigneeId: number | null;
   submitting: boolean;
   error: string | null;
 }>();
@@ -23,6 +26,7 @@ const form = reactive<QuestFormValue>({
   xpReward: 250,
   columnId: 'TODO',
   progress: 0,
+  assigneeId: 0,
   externalReference: '',
 });
 const options = computed(() =>
@@ -51,6 +55,7 @@ watch(open, (value) => {
           xpReward: entry.quest.xpReward,
           columnId: entry.columnId,
           progress: entry.progress ?? 0,
+          assigneeId: entry.quest.assigneeId,
           externalReference: entry.quest.externalReference ?? '',
         }
       : {
@@ -59,6 +64,7 @@ watch(open, (value) => {
           xpReward: 250,
           columnId: 'TODO',
           progress: 0,
+          assigneeId: props.defaultAssigneeId ?? props.players[0]?.id ?? 0,
           externalReference: '',
         },
   );
@@ -137,6 +143,16 @@ function submit() {
               :disable="completed"
             />
           </div>
+          <q-select
+            v-model="form.assigneeId"
+            outlined
+            dense
+            label="Assignee"
+            :options="players.map((player) => ({ label: player.name, value: player.id }))"
+            emit-value
+            map-options
+            :disable="completed"
+          />
           <q-input
             v-if="hasProgress"
             v-model.number="form.progress"

@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia';
 import type {
   CharacterReaction,
   CharacterState,
-  DemoState,
+  Player,
   ProgressionResult,
 } from '@/api/demo.types';
 import { dashboardPresentation } from '@/fixtures/dashboard.fixture';
@@ -15,19 +15,28 @@ function clone<T>(value: T): T {
 
 export function useDashboardDemo() {
   const store = useDemoStore();
-  const { state, loading, completingQuestId, resetting, error, realtimeStatus, lastProgression } =
-    storeToRefs(store);
+  const {
+    state,
+    selectedPlayer,
+    loading,
+    completingQuestId,
+    resetting,
+    error,
+    realtimeStatus,
+    lastProgression,
+  } = storeToRefs(store);
   const view = reactive(clone(dashboardPresentation));
   const reaction = ref<CharacterReaction | null>(null);
   const toast = ref<string | null>(null);
-  const characterState = computed<CharacterState>(() =>
-    state.value?.quests.some(({ status }) => status === 'IN_PROGRESS') ? 'coding' : 'idle',
+  const characterState = computed<CharacterState>(
+    () => selectedPlayer.value?.characterState ?? 'idle',
   );
   const quest = computed(
     () =>
-      state.value?.quests.find(({ id }) => id === 101) ??
-      state.value?.quests.find(({ status }) => status === 'IN_PROGRESS') ??
-      state.value?.quests[0],
+      state.value?.quests.find(
+        ({ status, assigneeId }) =>
+          status === 'IN_PROGRESS' && assigneeId === selectedPlayer.value?.id,
+      ) ?? null,
   );
 
   let reactionTimer: ReturnType<typeof setTimeout> | undefined;
@@ -35,12 +44,16 @@ export function useDashboardDemo() {
   let stopRealtime: (() => void) | undefined;
 
   watch(
-    state,
-    (currentState) => {
-      if (currentState === null) {
+    selectedPlayer,
+    (player, previousPlayer) => {
+      if (player === null) {
         return;
       }
-      syncPresentation(currentState);
+      if (previousPlayer && previousPlayer.id !== player.id) {
+        clearReactionTimer();
+        reaction.value = null;
+      }
+      syncPresentation(player);
     },
     { immediate: true },
   );
@@ -84,8 +97,7 @@ export function useDashboardDemo() {
     showToast('Demo state restored');
   }
 
-  function syncPresentation(currentState: DemoState): void {
-    const { player } = currentState;
+  function syncPresentation(player: Player): void {
     view.player.xpProgress =
       player.nextLevelXp === null ? 1 : Math.min(1, player.totalXp / player.nextLevelXp);
     view.player.xpToReward =
@@ -99,13 +111,15 @@ export function useDashboardDemo() {
       : 'Quest completed';
     view.activity.xpGained = progression.xpGained;
     view.activity.timeLabel = 'Just now';
-    reaction.value = progression.reaction ?? 'happy';
-    clearReactionTimer();
-    reactionTimer = setTimeout(() => {
-      reaction.value = null;
-      reactionTimer = undefined;
-    }, 1_500);
-    showToast(`Quest completed · +${progression.xpGained} XP`);
+    if (progression.player.id === selectedPlayer.value?.id) {
+      reaction.value = progression.reaction ?? 'happy';
+      clearReactionTimer();
+      reactionTimer = setTimeout(() => {
+        reaction.value = null;
+        reactionTimer = undefined;
+      }, 1_500);
+    }
+    showToast(`${progression.player.name} completed a Quest · +${progression.xpGained} XP`);
   }
 
   function showToast(message: string): void {
@@ -133,6 +147,7 @@ export function useDashboardDemo() {
 
   return {
     state,
+    selectedPlayer,
     view,
     quest,
     characterState,

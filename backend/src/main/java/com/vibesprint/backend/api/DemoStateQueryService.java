@@ -17,8 +17,6 @@ import java.util.List;
 @Service
 public class DemoStateQueryService {
 
-    private static final long DEMO_PLAYER_ID = 1L;
-
     private final PlayerRepository playerRepository;
     private final QuestRepository questRepository;
     private final RaidRepository raidRepository;
@@ -41,18 +39,32 @@ public class DemoStateQueryService {
 
     @Transactional(readOnly = true)
     public DemoStateResponse getState() {
-        Player player = playerRepository.findById(DEMO_PLAYER_ID)
-                .orElseThrow(() -> new DemoStateNotReadyException("Player " + DEMO_PLAYER_ID + " is not ready"));
         Raid raid = raidRepository.findByStatus(com.vibesprint.backend.raid.RaidStatus.ACTIVE).orElse(null);
         List<Quest> quests = questRepository.findAllInBoardOrder();
-        boolean hasActiveQuest = quests.stream().anyMatch(quest -> quest.getStatus() == QuestStatus.IN_PROGRESS);
-        ProgressionRules.PlayerProgress progress = progressionRules.describe(player.getTotalXp());
+        List<Player> players = playerRepository.findAllByOrderByIdAsc();
+        if (players.isEmpty()) {
+            throw new DemoStateNotReadyException("Players are not ready");
+        }
 
         return new DemoStateResponse(
-                mapper.toPlayer(player, progress, hasActiveQuest),
+                mapPlayers(players, quests),
                 quests.stream().map(mapper::toQuest).toList(),
-                mapper.toRaid(raid),
-                progressionRules.nextUnlock(player.getTotalXp()).map(mapper::toUnlock).orElse(null)
+                mapper.toRaid(raid)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<DemoStateResponse.PlayerView> getPlayers() {
+        return mapPlayers(playerRepository.findAllByOrderByIdAsc(), questRepository.findAllInBoardOrder());
+    }
+
+    private List<DemoStateResponse.PlayerView> mapPlayers(List<Player> players, List<Quest> quests) {
+        return players.stream().map(player -> {
+            boolean hasActiveQuest = quests.stream().anyMatch(quest ->
+                    quest.getAssignee().getId().equals(player.getId())
+                            && quest.getStatus() == QuestStatus.IN_PROGRESS
+            );
+            return mapper.toPlayer(player, progressionRules.describe(player.getTotalXp()), hasActiveQuest);
+        }).toList();
     }
 }
