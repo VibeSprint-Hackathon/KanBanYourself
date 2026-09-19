@@ -52,7 +52,11 @@ public class ProgressionService {
         ProgressionRules.PlayerProgress previousProgress = progressionRules.describe(previousXp);
         int xpGained = quest.getXpReward();
 
-        quest.complete();
+        int doneSortOrder = questRepository.findAllByStatusOrderBySortOrderAscIdAsc(QuestStatus.DONE).stream()
+                .mapToInt(Quest::getSortOrder)
+                .max()
+                .orElse(0) + 100;
+        quest.complete(doneSortOrder);
         player.addXp(xpGained);
         raid.applyDamage(xpGained);
 
@@ -130,10 +134,13 @@ public class ProgressionService {
                 new ProgressionResult.QuestSnapshot(
                         quest.getId(),
                         quest.getTitle(),
+                        quest.getDescription(),
                         quest.getStatus(),
+                        quest.getProgress(),
                         quest.getXpReward(),
                         player.getId(),
-                        quest.getExternalReference()
+                        quest.getExternalReference(),
+                        quest.getSortOrder()
                 ),
                 new ProgressionResult.PlayerSnapshot(
                         player.getId(),

@@ -37,15 +37,21 @@ class MvpPersistenceTests {
         assertEquals("Andrei", player.getName());
         assertEquals(920, player.getTotalXp());
 
-        List<Quest> quests = questRepository.findAllByOrderByIdAsc();
-        assertEquals(List.of(101L, 102L, 103L), quests.stream().map(Quest::getId).toList());
+        List<Quest> quests = questRepository.findAllInBoardOrder();
+        assertEquals(
+                List.of(104L, 105L, 102L, 106L, 101L, 107L, 108L, 109L, 103L, 110L),
+                quests.stream().map(Quest::getId).toList()
+        );
 
-        Quest activeQuest = quests.get(0);
+        Quest activeQuest = questRepository.findById(101L).orElseThrow();
         assertEquals("Fix payment validation", activeQuest.getTitle());
+        assertEquals("Fix server-side validation and cover the payment edge cases.", activeQuest.getDescription());
         assertEquals(QuestStatus.IN_PROGRESS, activeQuest.getStatus());
+        assertEquals(72, activeQuest.getProgress());
         assertEquals(180, activeQuest.getXpReward());
         assertEquals(1L, activeQuest.getAssignee().getId());
         assertNull(activeQuest.getExternalReference());
+        assertEquals(100, activeQuest.getSortOrder());
 
         Raid raid = raidRepository.findFirstByOrderByIdAsc().orElseThrow();
         assertEquals(201L, raid.getId());

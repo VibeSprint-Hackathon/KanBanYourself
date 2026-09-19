@@ -3,6 +3,8 @@ package com.vibesprint.backend.api;
 import com.vibesprint.backend.progression.DemoStateNotReadyException;
 import com.vibesprint.backend.progression.InvalidProgressionCommandException;
 import com.vibesprint.backend.progression.QuestNotFoundException;
+import com.vibesprint.backend.quest.InvalidQuestRequestException;
+import com.vibesprint.backend.quest.QuestConflictException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler({
             InvalidProgressionCommandException.class,
+            InvalidQuestRequestException.class,
             MethodArgumentNotValidException.class,
             HandlerMethodValidationException.class,
             ConstraintViolationException.class,
@@ -33,6 +36,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(QuestNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> questNotFound(QuestNotFoundException exception) {
         return error(HttpStatus.NOT_FOUND, "QUEST_NOT_FOUND", exception.getMessage());
+    }
+
+    @ExceptionHandler(QuestConflictException.class)
+    public ResponseEntity<ApiErrorResponse> questConflict(QuestConflictException exception) {
+        return error(HttpStatus.CONFLICT, "QUEST_CONFLICT", exception.getMessage());
     }
 
     @ExceptionHandler(DemoStateNotReadyException.class)

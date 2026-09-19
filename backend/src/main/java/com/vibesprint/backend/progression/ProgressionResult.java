@@ -39,10 +39,13 @@ public record ProgressionResult(
     public record QuestSnapshot(
             long id,
             String title,
+            String description,
             QuestStatus status,
+            Integer progress,
             int xpReward,
             long assigneeId,
-            String externalReference
+            String externalReference,
+            int sortOrder
     ) {
     }
 

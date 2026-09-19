@@ -2,185 +2,130 @@
 
 ## Назначение
 
-Этот документ описывает HTTP API, доступный фронтенду и демонстрационным адаптерам. Базовый адрес локального приложения: `http://localhost:8080`.
+HTTP API для Dashboard и пятиколоночной доски. Базовый адрес: `http://localhost:8080`. Аутентификации в демо нет; JSON-запросы используют `Content-Type: application/json`.
 
-Точные реализованные DTO определяются кодом в `backend/src/main/java/com/vibesprint/backend/api/` и HTTP-тестами. Замороженный контракт MVP находится в [CONTRACTS.md](../stages/00-contracts/CONTRACTS.md).
+## Endpoint
 
-## Текущий статус
+| Метод и путь | Успех | Назначение |
+|---|---:|---|
+| `GET /api/health` | 200 | Проверка запуска |
+| `GET /api/demo/state` | 200 | Полный снимок демо |
+| `POST /api/demo/reset` | 200 | Восстановление точного seed |
+| `POST /api/demo/quests` | 201 | Создание Квеста |
+| `PUT /api/demo/quests/{id}` | 200 | Обновление Квеста |
+| `PATCH /api/demo/quests/{id}/move` | 200 | Перемещение/сортировка |
+| `DELETE /api/demo/quests/{id}` | 200 | Удаление незавершённого Квеста |
+| `POST /api/demo/quests/{id}/complete` | 200 | Завершение и прогресс игрока/рейда |
 
-| Метод и путь | Статус | Назначение |
-|---|---|---|
-| `GET /api/health` | Готов | Проверка запуска приложения |
-| `GET /api/demo/state` | Готов | Получение всего состояния для интерфейса |
-| `POST /api/demo/quests/{questId}/complete` | Готов | Завершение Квеста и применение прогресса |
-| `POST /api/demo/reset` | Готов | Атомарное восстановление исходного состояния |
+Все четыре обычные мутации Квеста возвращают полный актуальный `DemoStateResponse`.
 
-Для JSON-запросов используется `Content-Type: application/json`. Аутентификации в MVP нет.
+## Квест
 
-## Общие значения
+Полный объект Квеста имеет один контракт:
 
-- Статус Квеста: `TODO | IN_PROGRESS | DONE`.
-- Статус рейда: `ACTIVE | DEFEATED`.
-- Состояние персонажа: `idle | coding`.
-- Реакция после завершения: `happy | level-up`.
-- Источник команды: `DEMO | GITHUB`.
-- Nullable-поля присутствуют в JSON со значением `null`.
-
-## Проверка доступности
-
-### `GET /api/health`
-
-Успешный ответ: HTTP 200 и строка `OK`.
-
-```bash
-curl http://localhost:8080/api/health
+```json
+{
+  "id": 101,
+  "title": "Fix payment validation",
+  "description": "Fix server-side validation and cover the payment edge cases.",
+  "status": "IN_PROGRESS",
+  "progress": 72,
+  "xpReward": 180,
+  "assigneeId": 1,
+  "externalReference": null,
+  "sortOrder": 100
+}
 ```
 
-## Получение состояния
+Статусы: `BACKLOG | TODO | IN_PROGRESS | TESTING | DONE`. Порядок колонок фиксирован именно так; внутри колонки — `sortOrder ASC`, затем `id ASC`.
+
+- Для `BACKLOG`/`TODO` progress равен `null`.
+- Для `IN_PROGRESS`/`TESTING` progress находится в `0..100`; при входе без значения используется `0`.
+- Для `DONE` progress равен `100`.
+- `sortOrder` положительный; после move значения нормализуются с шагом 100.
+
+## Полное состояние
 
 ### `GET /api/demo/state`
 
-Возвращает игрока, все Квесты, текущий рейд и следующую ещё не полученную награду. Квесты отсортированы по `id`.
+Возвращает `player`, десять упорядоченных `quests`, `raid` и nullable `nextUnlock`. Reset возвращает ту же форму. Исходные ключевые значения: игрок 1 с 920 XP, Квест 101 `IN_PROGRESS`/72/180 XP, рейд 201 с 180 из 1000 HP.
 
-```bash
-curl http://localhost:8080/api/demo/state
-```
+## Создание
 
-Пример исходного ответа:
+### `POST /api/demo/quests`
 
 ```json
 {
-  "player": {
-    "id": 1,
-    "name": "Andrei",
-    "totalXp": 920,
-    "level": 4,
-    "nextLevelXp": 1000,
-    "title": "Code Adventurer",
-    "cosmeticKey": "base",
-    "characterState": "coding"
-  },
-  "quests": [
-    {
-      "id": 101,
-      "title": "Fix payment validation",
-      "status": "IN_PROGRESS",
-      "xpReward": 180,
-      "assigneeId": 1,
-      "externalReference": null
-    }
-  ],
-  "raid": {
-    "id": 201,
-    "name": "Merge Conflict Hydra",
-    "maxHp": 1000,
-    "currentHp": 180,
-    "status": "ACTIVE"
-  },
-  "nextUnlock": {
-    "level": 5,
-    "cosmeticKey": "rare-hoodie",
-    "displayName": "Rare Hoodie"
-  }
+  "title": "Add keyboard shortcuts",
+  "description": "Speed up common actions.",
+  "status": "BACKLOG",
+  "progress": null,
+  "xpReward": 250,
+  "externalReference": null
 }
 ```
 
-Реальный seed содержит три Квеста. После получения `rare-hoodie` поле `nextUnlock` равно `null`. Если подготовленный игрок или рейд отсутствует, API возвращает `409 DEMO_STATE_NOT_READY`.
+Допустимы только незавершённые статусы. Исполнитель всегда demo player 1. Квест получает id из PostgreSQL sequence (начиная с 1000) и добавляется в конец колонки.
 
-## Завершение Квеста
+## Обновление
 
-### `POST /api/demo/quests/{questId}/complete`
+### `PUT /api/demo/quests/{id}`
 
-`questId` — положительный числовой идентификатор. Endpoint вызывает атомарный сервис прогресса: переводит Квест в `DONE`, начисляет XP, вычисляет уровень и награду, наносит урон рейду.
+Тело совпадает с create. У незавершённого Квеста разрешены любые незавершённые статусы; смена колонки добавляет его в конец. `DONE` нельзя установить этим endpoint.
 
-```bash
-curl -X POST http://localhost:8080/api/demo/quests/101/complete \
-  -H "Content-Type: application/json" \
-  -d '{"eventId":"demo-payment-validation-1","source":"DEMO"}'
-```
+У завершённого Квеста разрешено менять только `title`, `description`, `externalReference`; запрос обязан сохранить `status=DONE`, `progress=100` и прежний `xpReward`.
 
-Тело запроса:
+## Перемещение
 
-| Поле | Тип | Правило |
-|---|---|---|
-| `eventId` | string | Обязательно, не может быть пустым |
-| `source` | enum | Обязательно: `DEMO` или `GITHUB` |
-
-Основные поля успешного ответа:
-
-| Поле | Значение |
-|---|---|
-| `applied` | Применена ли награда в этом вызове |
-| `reason` | `null` или `ALREADY_COMPLETED` |
-| `xpGained` | Начисленный XP |
-| `raidDamage` | Нанесённый урон |
-| `levelUp` | Повысился ли уровень |
-| `unlockedCosmetic` | Полученная косметика или `null` |
-| `reaction` | `happy`, `level-up` или `null` |
-| `bossDefeated` | Равен ли итоговый HP рейда нулю |
-| `quest`, `player`, `raid` | Полные актуальные снимки объектов |
-
-Для Квеста 101 первый вызов возвращает 180 XP, уровень 5, `rare-hoodie` и побеждённый рейд. Полный JSON-пример приведён в [контракте](../stages/00-contracts/CONTRACTS.md#успешный-результат).
-
-### Повтор команды
-
-Повторное завершение Квеста безопасно и отвечает HTTP 200:
-
-- `applied=false`;
-- `reason=ALREADY_COMPLETED`;
-- `xpGained=0` и `raidDamage=0`;
-- награда и реакция равны `null`;
-- `quest`, `player` и `raid` содержат полное текущее состояние.
-
-`eventId` возвращается в ответе, но в MVP не хранится. От повторной награды защищает статус Квеста `DONE`.
-
-## Ошибки
-
-Все контролируемые ошибки имеют одинаковую форму:
+### `PATCH /api/demo/quests/{id}/move`
 
 ```json
 {
-  "code": "QUEST_NOT_FOUND",
-  "message": "Quest 999 was not found"
+  "status": "TESTING",
+  "beforeQuestId": 108
 }
 ```
 
-| HTTP | `code` | Причина |
+`beforeQuestId=null` добавляет в конец. Иначе id должен указывать на другой Квест целевой колонки. Исходная и целевая колонки нормализуются. Завершённый Квест и перемещение в `DONE` запрещены.
+
+## Удаление
+
+### `DELETE /api/demo/quests/{id}`
+
+Удаляет только незавершённый Квест и возвращает оставшееся состояние. `DONE` не удаляется, поскольку XP и урон необратимы.
+
+## Завершение
+
+### `POST /api/demo/quests/{id}/complete`
+
+```json
+{"eventId":"demo-payment-validation-1","source":"DEMO"}
+```
+
+Источник: `DEMO | GITHUB`. Одна транзакция переводит Квест в `DONE`, ставит progress 100, добавляет его в конец `DONE`, начисляет XP и наносит равный урон рейду. `ProgressionResponse.quest` использует полный контракт Квеста.
+
+Повтор безопасен: `applied=false`, `reason=ALREADY_COMPLETED`, XP/урон равны 0, а снимки Квеста, игрока и рейда остаются полными. Для Квеста 101 первый вызов даёт 1100 XP и 0 HP рейда.
+
+## Валидация и ошибки
+
+- `title`: непустой, максимум 255 символов.
+- `description`: обязателен, максимум 2000 символов.
+- `xpReward`: положительное целое.
+- `externalReference`: nullable, максимум 500 символов.
+- Path id и nullable `beforeQuestId`: положительные.
+
+Форма ошибки: `{"code":"QUEST_NOT_FOUND","message":"Quest 999 was not found"}`.
+
+| HTTP | code | Причина |
 |---:|---|---|
-| 400 | `INVALID_REQUEST` | Некорректный id, JSON, `eventId` или `source` |
-| 404 | `QUEST_NOT_FOUND` | Квест не существует |
-| 409 | `DEMO_STATE_NOT_READY` | Игрок или рейд не подготовлен |
-| 500 | `INTERNAL_ERROR` | Неожиданный внутренний сбой |
+| 400 | `INVALID_REQUEST` | Невалидный JSON, поля или progress/status |
+| 404 | `QUEST_NOT_FOUND` | Нет Квеста или `beforeQuestId` не в целевой колонке |
+| 409 | `QUEST_CONFLICT` | Запрещённый переход, удаление или изменение завершённого Квеста |
+| 409 | `DEMO_STATE_NOT_READY` | Не подготовлен игрок или рейд |
+| 500 | `INTERNAL_ERROR` | Неожиданный сбой без внутренних деталей |
 
-Внутренние исключения, SQL и stack trace клиенту не возвращаются.
+## Reset и realtime
 
-## Рекомендуемый поток фронтенда
+`POST /api/demo/reset` атомарно удаляет пользовательские изменения, восстанавливает игрока, десять Квестов, рейд и sequence Квестов на 1000.
 
-1. При открытии страницы вызвать `GET /api/demo/state`.
-2. Для демо-завершения вызвать `POST .../complete`.
-3. Сразу применить `quest`, `player` и `raid` из ответа POST.
-4. При сомнении в актуальности перечитать `GET /api/demo/state`.
-5. Не рассчитывать XP, уровни, награды или урон на фронтенде.
-
-## Сброс демо
-
-### `POST /api/demo/reset`
-
-Запрос не содержит тела. Endpoint атомарно удаляет изменённые и лишние демо-данные, восстанавливает исходного игрока, три Квеста и рейд, затем возвращает тот же объект, что `GET /api/demo/state`.
-
-```bash
-curl -X POST http://localhost:8080/api/demo/reset
-```
-
-## Realtime
-
-- Протокол: STOMP поверх WebSocket.
-- Подключение: `ws://localhost:8080/ws`.
-- Подписка: `/topic/progression`.
-- Разрешённые Origin MVP: `http://localhost:*` и `http://127.0.0.1:*`.
-- Payload: тот же JSON, что возвращает успешный `POST .../complete`.
-- Сообщение отправляется только при `applied=true`; повтор не создаёт событие.
-- Reset не отправляет другой тип сообщения.
-- При ошибке или переподключении клиент перечитывает `GET /api/demo/state`.
-
-Vue-клиент подключён при старте приложения, использует одну STOMP-сессию и передаёт типизированный payload подписчикам через `progressionRealtime.subscribe(...)`. В разработке адрес можно переопределить переменной `VITE_WS_URL`. REST остаётся основным путём инициирующего экрана и способом полной повторной синхронизации.
+STOMP подключается к `/ws`, topic — `/topic/progression`. Публикуется только применённый `ProgressionResponse`; повтор и reset событий не создают. REST остаётся обязательным источником полного состояния.

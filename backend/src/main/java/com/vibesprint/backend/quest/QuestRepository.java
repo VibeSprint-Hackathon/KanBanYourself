@@ -11,7 +11,19 @@ import java.util.Optional;
 
 public interface QuestRepository extends JpaRepository<Quest, Long> {
 
-    List<Quest> findAllByOrderByIdAsc();
+    @Query("""
+            select quest from Quest quest
+            order by case quest.status
+                when com.vibesprint.backend.quest.QuestStatus.BACKLOG then 0
+                when com.vibesprint.backend.quest.QuestStatus.TODO then 1
+                when com.vibesprint.backend.quest.QuestStatus.IN_PROGRESS then 2
+                when com.vibesprint.backend.quest.QuestStatus.TESTING then 3
+                when com.vibesprint.backend.quest.QuestStatus.DONE then 4
+            end, quest.sortOrder, quest.id
+            """)
+    List<Quest> findAllInBoardOrder();
+
+    List<Quest> findAllByStatusOrderBySortOrderAscIdAsc(QuestStatus status);
 
     boolean existsByStatus(QuestStatus status);
 
