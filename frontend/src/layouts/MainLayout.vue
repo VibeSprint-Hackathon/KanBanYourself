@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
 import {
@@ -10,13 +10,21 @@ import {
   mdiViewDashboardOutline,
 } from '@quasar/extras/mdi-v7';
 import { dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
+import type { CharacterReaction, CharacterState } from '@/api/demo.types';
+import CharacterAvatar from '@/components/dashboard/CharacterAvatar.vue';
 import RaidDamageNotification from '@/components/raids/RaidDamageNotification.vue';
 import { useDemoStore } from '@/stores/demo';
 
 const route = useRoute();
 const demoStore = useDemoStore();
-const { state, selectedPlayer } = storeToRefs(demoStore);
+const { state, selectedPlayer, lastProgression } = storeToRefs(demoStore);
+const reaction = ref<CharacterReaction | null>(null);
+const characterState = computed<CharacterState>(
+  () => selectedPlayer.value?.characterState ?? 'idle',
+);
 const playerName = computed(() => selectedPlayer.value?.name ?? 'Player');
+const playerLevel = computed(() => selectedPlayer.value?.level ?? 0);
+const playerCosmeticKey = computed(() => selectedPlayer.value?.cosmeticKey ?? 'base');
 const playerInitials = computed(() => {
   const initials = playerName.value
     .split(/\s+/)
@@ -33,6 +41,47 @@ const navigation = [
   { label: 'Raids', icon: mdiSwordCross, to: '/raids' },
   { label: 'Achievements', icon: mdiTrophyOutline, to: '/achievements' },
 ];
+
+let reactionTimer: ReturnType<typeof setTimeout> | undefined;
+let stopRealtime: (() => void) | undefined;
+
+watch(selectedPlayer, (player, previousPlayer) => {
+  if (previousPlayer && player?.id !== previousPlayer.id) {
+    clearReactionTimer();
+    reaction.value = null;
+  }
+});
+
+watch(lastProgression, (progression) => {
+  if (!progression?.applied || progression.player.id !== selectedPlayer.value?.id) {
+    return;
+  }
+  reaction.value = progression.reaction ?? 'happy';
+  clearReactionTimer();
+  reactionTimer = setTimeout(() => {
+    reaction.value = null;
+    reactionTimer = undefined;
+  }, 1_500);
+});
+
+onMounted(() => {
+  stopRealtime = demoStore.startRealtime();
+  if (state.value === null) {
+    void demoStore.loadState();
+  }
+});
+
+onUnmounted(() => {
+  stopRealtime?.();
+  clearReactionTimer();
+});
+
+function clearReactionTimer(): void {
+  if (reactionTimer) {
+    clearTimeout(reactionTimer);
+    reactionTimer = undefined;
+  }
+}
 </script>
 
 <template>
@@ -68,6 +117,15 @@ const navigation = [
             ></q-list
           >
         </nav>
+        <div v-if="route.path !== '/'" class="sidebar-companion">
+          <CharacterAvatar
+            :name="playerName"
+            :persistent-state="characterState"
+            :reaction="reaction"
+            :cosmetic-key="playerCosmeticKey"
+            :level="playerLevel"
+          />
+        </div>
         <div class="sidebar-player" role="button" tabindex="0" aria-label="Switch profile">
           <q-avatar rounded size="40px">{{ playerInitials }}</q-avatar>
           <div>
@@ -86,7 +144,9 @@ const navigation = [
                 :active="player.id === selectedPlayer?.id"
                 @click="demoStore.selectPlayer(player.id)"
               >
-                <q-item-section avatar><q-avatar size="32px">{{ player.name[0] }}</q-avatar></q-item-section>
+                <q-item-section avatar
+                  ><q-avatar size="32px">{{ player.name[0] }}</q-avatar></q-item-section
+                >
                 <q-item-section>
                   <q-item-label>{{ player.name }}</q-item-label>
                   <q-item-label caption>@{{ player.githubLogin }}</q-item-label>
@@ -146,6 +206,19 @@ const navigation = [
 }
 nav {
   margin-top: 55px;
+}
+.sidebar-companion {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  margin-inline: -18px;
+  padding: 14px 0 8px;
+}
+.sidebar-companion :deep(.character-avatar) {
+  width: min(224px, 100%);
+  height: clamp(185px, 29vh, 224px);
 }
 .nav-item {
   height: 50px;

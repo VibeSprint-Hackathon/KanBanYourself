@@ -37,7 +37,8 @@ defineProps<{
       :name="player.name"
       :persistent-state="characterState"
       :reaction="reaction"
-      :hoodie-enabled="player.cosmeticKey !== 'base'"
+      :cosmetic-key="player.cosmeticKey"
+      :level="player.level"
     />
     <div class="player-progress">
       <div class="spread progress-heading">
@@ -56,7 +57,9 @@ defineProps<{
       <div v-if="player.nextUnlock" class="next-reward">
         <div class="eyebrow orange">
           <q-icon name="auto_awesome" size="17px" />
-          {{ player.cosmeticKey === player.nextUnlock.cosmeticKey ? 'Reward unlocked' : 'Next reward' }}
+          {{
+            player.cosmeticKey === player.nextUnlock.cosmeticKey ? 'Reward unlocked' : 'Next reward'
+          }}
         </div>
         <div class="spread reward-detail">
           <h3>{{ player.nextUnlock.displayName }}</h3>
@@ -123,6 +126,7 @@ h1 {
 }
 .player-character {
   min-height: 0;
+  transform: translateX(-34px);
 }
 .player-progress {
   padding-left: 4px;
@@ -154,6 +158,9 @@ h1 {
   .player-card {
     grid-template-columns: 30% 23% 47%;
   }
+  .player-character {
+    transform: translateX(-46px);
+  }
   h1 {
     font-size: 44px;
   }
@@ -177,6 +184,7 @@ h1 {
   }
   .player-character {
     height: 260px;
+    transform: translateX(-16px);
   }
   h1 {
     margin-top: 25px;

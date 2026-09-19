@@ -114,13 +114,41 @@ class QuestKanbanApiTests {
                         .contentType("application/json")
                         .content("{\"eventId\":\"timofei-xp\",\"source\":\"DEMO\"}"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applied").value(true))
+                .andExpect(jsonPath("$.xpGained").value(120))
                 .andExpect(jsonPath("$.player.id").value(2))
-                .andExpect(jsonPath("$.player.totalXp").value(760));
+                .andExpect(jsonPath("$.player.totalXp").value(760))
+                .andExpect(jsonPath("$.quest.status").value("DONE"))
+                .andExpect(jsonPath("$.quest.progress").value(100));
 
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.players[0].totalXp").value(920))
                 .andExpect(jsonPath("$.players[1].totalXp").value(760));
+    }
+
+    @Test
+    void movingQuestsUpdatesCharacterStateOnlyForTheirAssignee() throws Exception {
+        mockMvc.perform(patch("/api/demo/quests/101/move")
+                        .contentType("application/json")
+                        .content("{\"status\":\"TODO\",\"beforeQuestId\":null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.players[0].characterState").value("idle"))
+                .andExpect(jsonPath("$.players[1].characterState").value("idle"));
+
+        mockMvc.perform(patch("/api/demo/quests/102/move")
+                        .contentType("application/json")
+                        .content("{\"status\":\"IN_PROGRESS\",\"beforeQuestId\":null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.players[0].characterState").value("idle"))
+                .andExpect(jsonPath("$.players[1].characterState").value("coding"));
+
+        mockMvc.perform(patch("/api/demo/quests/106/move")
+                        .contentType("application/json")
+                        .content("{\"status\":\"IN_PROGRESS\",\"beforeQuestId\":null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.players[0].characterState").value("coding"))
+                .andExpect(jsonPath("$.players[1].characterState").value("coding"));
     }
 
     @Test
