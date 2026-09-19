@@ -84,6 +84,12 @@ public class GitHubIssueWebhookService {
         }
 
         githubIssueService.syncIssuesToBoard(List.of(toIssueResponse(issueNode, payload)));
+
+        Quest linkedQuest = questRepository.findByExternalReference(issueUrl).orElse(null);
+        var assignee = linkedQuest != null && linkedQuest.getAssignee() != null
+                ? linkedQuest.getAssignee()
+                : null;
+
         return new ProgressionResponse(
                 deliveryId,
                 true,
@@ -94,8 +100,29 @@ public class GitHubIssueWebhookService {
                 null,
                 "updated",
                 false,
-                null,
-                null,
+                linkedQuest == null ? null : new com.vibesprint.backend.api.DemoStateResponse.QuestView(
+                        linkedQuest.getId(),
+                        linkedQuest.getTitle(),
+                        linkedQuest.getDescription(),
+                        linkedQuest.getStatus().name(),
+                        linkedQuest.getProgress(),
+                        linkedQuest.getXpReward(),
+                        assignee != null ? assignee.getId() : 1L,
+                        linkedQuest.getExternalReference(),
+                        linkedQuest.getSortOrder()
+                ),
+                assignee == null ? null : new com.vibesprint.backend.api.DemoStateResponse.PlayerView(
+                        assignee.getId(),
+                        assignee.getName(),
+                        assignee.getGithubLogin(),
+                        assignee.getTotalXp(),
+                        1,
+                        null,
+                        "Developer",
+                        null,
+                        "coding",
+                        null
+                ),
                 null,
                 "GITHUB",
                 false

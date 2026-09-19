@@ -258,7 +258,9 @@ class DemoApiTests {
                         .content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.applied").value(true))
-                .andExpect(jsonPath("$.source").value("GITHUB"));
+                .andExpect(jsonPath("$.source").value("GITHUB"))
+                .andExpect(jsonPath("$.quest.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.player.id").value(1));
 
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
