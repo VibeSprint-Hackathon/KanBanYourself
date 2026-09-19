@@ -12,6 +12,7 @@ import {
 import { dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
 import type { CharacterReaction, CharacterState } from '@/api/demo.types';
 import CharacterAvatar from '@/components/dashboard/CharacterAvatar.vue';
+import PictureInPictureCompanion from '@/components/companion/PictureInPictureCompanion.vue';
 import RaidDamageNotification from '@/components/raids/RaidDamageNotification.vue';
 import AchievementUnlockNotification from '@/components/achievements/AchievementUnlockNotification.vue';
 import { useDemoStore } from '@/stores/demo';
@@ -133,6 +134,13 @@ function clearReactionTimer(): void {
             <strong>{{ playerName }}</strong
             ><span>{{ view.player.sidebarStatus }}</span>
           </div>
+          <PictureInPictureCompanion
+            :name="playerName"
+            :persistent-state="characterState"
+            :reaction="reaction"
+            :cosmetic-key="playerCosmeticKey"
+            :level="playerLevel"
+          />
           <q-icon :name="mdiCogOutline" size="19px" class="muted" />
           <q-menu anchor="top right" self="bottom right">
             <q-list style="min-width: 210px">
