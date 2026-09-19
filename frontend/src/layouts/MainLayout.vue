@@ -30,7 +30,7 @@ const navigation = [
   { label: 'Dashboard', icon: mdiViewDashboardOutline, to: '/' },
   { label: 'Quests', icon: mdiBookOpenPageVariantOutline, to: '/quests' },
   { label: 'Raids', icon: mdiSwordCross, to: '/raids' },
-  { label: 'Achievements', icon: mdiTrophyOutline, to: undefined },
+  { label: 'Achievements', icon: mdiTrophyOutline, to: '/achievements' },
 ];
 </script>
 
