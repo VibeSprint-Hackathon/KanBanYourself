@@ -13,6 +13,8 @@ const props = defineProps<{
   mode: 'create' | 'edit';
   entry: BoardQuest | null;
   columns: BoardColumn[];
+  submitting: boolean;
+  error: string | null;
 }>();
 const emit = defineEmits<{ save: [value: QuestFormValue] }>();
 const form = reactive<QuestFormValue>({
@@ -25,9 +27,12 @@ const form = reactive<QuestFormValue>({
 });
 const options = computed(() =>
   props.columns
-    .filter((c) => props.mode === 'edit' || c.id !== 'DONE')
-    .map((c) => ({ label: c.label, value: c.id })),
+    .filter((column) =>
+      props.entry?.columnId === 'DONE' ? column.id === 'DONE' : column.id !== 'DONE',
+    )
+    .map((column) => ({ label: column.label, value: column.id })),
 );
+const completed = computed(() => props.mode === 'edit' && props.entry?.columnId === 'DONE');
 const hasProgress = computed(() => form.columnId === 'IN_PROGRESS' || form.columnId === 'TESTING');
 const payload = computed<QuestFormValue>(() => ({
   ...form,
@@ -75,6 +80,7 @@ function submit() {
             round
             :icon="mdiClose"
             aria-label="Close Quest form"
+            :disable="submitting"
             @click="open = false"
           />
         </div>
@@ -90,6 +96,7 @@ function submit() {
             autofocus
             label="Quest title"
             placeholder="Name this Quest"
+            maxlength="255"
             :rules="[(v) => !!String(v).trim() || 'Title is required']"
             lazy-rules
           />
@@ -100,6 +107,9 @@ function submit() {
             type="textarea"
             rows="3"
             placeholder="What needs to be accomplished?"
+            maxlength="2000"
+            :rules="[(v) => !!String(v).trim() || 'Description is required']"
+            lazy-rules
           />
           <div class="form-row">
             <q-input
@@ -111,6 +121,7 @@ function submit() {
               min="1"
               step="1"
               suffix="XP"
+              :disable="completed"
               :rules="[
                 (v) => (Number.isInteger(Number(v)) && Number(v) > 0) || 'Use a positive integer',
               ]"
@@ -123,6 +134,7 @@ function submit() {
               :options="options"
               emit-value
               map-options
+              :disable="completed"
             />
           </div>
           <q-input
@@ -144,19 +156,29 @@ function submit() {
             dense
             label="GitHub reference (optional)"
             placeholder="Pull request URL or reference"
+            maxlength="500"
           />
           <p v-if="form.columnId === 'DONE'" class="muted form-note">
-            {{ columnVisuals.DONE.status }} · 100% progress. This only changes board placement.
+            {{ columnVisuals.DONE.status }} · status, progress and XP reward are locked.
           </p>
+          <p v-if="error" class="form-error" role="alert">{{ error }}</p>
         </div>
         <footer>
-          <q-btn flat no-caps label="Cancel" class="secondary-action" @click="open = false" /><q-btn
+          <q-btn
+            flat
+            no-caps
+            label="Cancel"
+            class="secondary-action"
+            :disable="submitting"
+            @click="open = false"
+          /><q-btn
             unelevated
             no-caps
             type="submit"
             :label="mode === 'create' ? 'Create Quest' : 'Save changes'"
             class="primary-action"
-            :disable="!valid"
+            :loading="submitting"
+            :disable="!valid || submitting"
           />
         </footer>
       </q-form>
@@ -200,6 +222,11 @@ header p {
 .form-note {
   margin: 0;
   font-size: 12px;
+}
+.form-error {
+  margin: 0;
+  color: var(--red);
+  font-size: 13px;
 }
 footer {
   display: flex;

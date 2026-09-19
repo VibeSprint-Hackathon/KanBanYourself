@@ -1,5 +1,11 @@
 import { api } from '@/api/http';
-import type { DemoState, ProgressionResult } from '@/api/demo.types';
+import type {
+  CreateQuestRequest,
+  DemoState,
+  MoveQuestRequest,
+  ProgressionResult,
+  UpdateQuestRequest,
+} from '@/api/demo.types';
 
 export type ProgressionSource = 'DEMO' | 'GITHUB';
 
@@ -23,5 +29,31 @@ export async function completeDemoQuest(
 
 export async function resetDemoState(): Promise<DemoState> {
   const response = await api.post<DemoState>('/demo/reset');
+  return response.data;
+}
+
+export async function createDemoQuest(request: CreateQuestRequest): Promise<DemoState> {
+  const response = await api.post<DemoState>('/demo/quests', request);
+  return response.data;
+}
+
+export async function updateDemoQuest(
+  questId: number,
+  request: UpdateQuestRequest,
+): Promise<DemoState> {
+  const response = await api.put<DemoState>(`/demo/quests/${questId}`, request);
+  return response.data;
+}
+
+export async function deleteDemoQuest(questId: number): Promise<DemoState> {
+  const response = await api.delete<DemoState>(`/demo/quests/${questId}`);
+  return response.data;
+}
+
+export async function moveDemoQuest(
+  questId: number,
+  request: MoveQuestRequest,
+): Promise<DemoState> {
+  const response = await api.patch<DemoState>(`/demo/quests/${questId}/move`, request);
   return response.data;
 }

@@ -13,13 +13,14 @@ const props = withDefaults(
     quest: Quest;
     presentation: QuestPresentation;
     completing?: boolean;
+    mutating?: boolean;
     mode?: 'dashboard' | 'board';
     statusLabel?: string;
     completed?: boolean;
     showProgress?: boolean;
     statusColor?: string;
   }>(),
-  { completing: false, mode: 'dashboard', showProgress: true },
+  { completing: false, mutating: false, mode: 'dashboard', showProgress: true },
 );
 defineEmits<{ complete: []; edit: []; delete: [] }>();
 const isCompleted = computed(() =>
@@ -107,13 +108,31 @@ const referenceUrl = computed(() => safeReferenceUrl(props.quest.externalReferen
         />
         <template v-else>
           <q-btn
+            v-if="!isCompleted"
             unelevated
             no-caps
             class="complete-button"
+            label="Complete Quest"
+            :loading="completing"
+            :disable="completing || mutating"
+            @click="$emit('complete')"
+          />
+          <q-btn
+            flat
+            no-caps
             label="Edit Quest"
+            :disable="completing || mutating"
             @click="$emit('edit')"
           />
-          <q-btn flat no-caps class="red" label="Delete Quest" @click="$emit('delete')" />
+          <q-btn
+            v-if="!isCompleted"
+            flat
+            no-caps
+            class="red"
+            label="Delete Quest"
+            :disable="completing || mutating"
+            @click="$emit('delete')"
+          />
         </template>
         <q-btn flat no-caps class="drawer-close" label="Close" @click="open = false" />
       </footer>

@@ -1,5 +1,5 @@
 // Контракты GET /api/demo/state и POST /api/demo/quests/{questId}/complete.
-export type QuestStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+export type QuestStatus = 'BACKLOG' | 'TODO' | 'IN_PROGRESS' | 'TESTING' | 'DONE';
 export type RaidStatus = 'ACTIVE' | 'DEFEATED';
 export type CharacterState = 'idle' | 'coding';
 export type CharacterReaction = 'happy' | 'level-up';
@@ -18,10 +18,36 @@ export interface Player {
 export interface Quest {
   id: number;
   title: string;
+  description: string;
   status: QuestStatus;
+  progress: number | null;
   xpReward: number;
   assigneeId: number;
   externalReference: string | null;
+  sortOrder: number;
+}
+
+export interface CreateQuestRequest {
+  title: string;
+  description: string;
+  status: Exclude<QuestStatus, 'DONE'>;
+  progress: number | null;
+  xpReward: number;
+  externalReference: string | null;
+}
+
+export interface UpdateQuestRequest {
+  title: string;
+  description: string;
+  status: QuestStatus;
+  progress: number | null;
+  xpReward: number;
+  externalReference: string | null;
+}
+
+export interface MoveQuestRequest {
+  status: Exclude<QuestStatus, 'DONE'>;
+  beforeQuestId: number | null;
 }
 
 export interface Raid {

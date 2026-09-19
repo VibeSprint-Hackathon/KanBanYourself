@@ -1,6 +1,6 @@
-import type { Quest } from '@/api/demo.types';
+import type { Quest, QuestStatus } from '@/api/demo.types';
 
-export type BoardColumnId = 'BACKLOG' | 'TODO' | 'IN_PROGRESS' | 'TESTING' | 'DONE';
+export type BoardColumnId = QuestStatus;
 export interface BoardColumn {
   id: BoardColumnId;
   label: string;
@@ -82,8 +82,12 @@ export function displayedProgress(entry: BoardQuest): number | null {
 export function validQuestForm(value: QuestFormValue): boolean {
   return (
     value.title.trim().length > 0 &&
+    value.title.trim().length <= 255 &&
+    value.description.trim().length > 0 &&
+    value.description.trim().length <= 2000 &&
     Number.isInteger(value.xpReward) &&
     value.xpReward > 0 &&
+    value.externalReference.trim().length <= 500 &&
     (value.progress === null ||
       (Number.isFinite(value.progress) && value.progress >= 0 && value.progress <= 100))
   );

@@ -81,13 +81,6 @@ export function useDashboardDemo() {
       player.nextLevelXp === null ? 1 : Math.min(1, player.totalXp / player.nextLevelXp);
     view.player.xpToReward =
       player.nextLevelXp === null ? 0 : Math.max(0, player.nextLevelXp - player.totalXp);
-
-    currentState.quests.forEach((currentQuest) => {
-      const presentation = view.quests[currentQuest.id];
-      if (presentation && currentQuest.status === 'DONE') {
-        presentation.progressPercent = 100;
-      }
-    });
   }
 
   function showProgression(progression: ProgressionResult): void {

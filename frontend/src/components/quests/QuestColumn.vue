@@ -117,7 +117,7 @@ function drop(event: DragEvent) {
         <QuestCard
           :entry="entry"
           :compact="compact"
-          :drag-disabled="readOnly || searching"
+          :drag-disabled="readOnly || searching || entry.columnId === 'DONE'"
           :dragging="dragId === entry.quest.id"
           @open="emit('open', $event)"
           @start="(id, event) => emit('start', id, event)"

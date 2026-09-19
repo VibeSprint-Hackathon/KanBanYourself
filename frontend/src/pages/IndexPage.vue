@@ -24,7 +24,13 @@ const {
   resetDemo,
 } = useDashboardDemo();
 const questView = computed(() =>
-  activeQuest.value ? view.quests[activeQuest.value.id] : undefined,
+  activeQuest.value
+    ? {
+        description: activeQuest.value.description,
+        progressPercent: activeQuest.value.progress ?? 0,
+        pullRequestLabel: activeQuest.value.externalReference ?? '',
+      }
+    : undefined,
 );
 
 async function handleCompleteQuest() {

@@ -1,8 +1,25 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
 import { isAxiosError } from 'axios';
-import { completeDemoQuest, getDemoState, resetDemoState } from '@/api/demo';
-import type { ApiError, DemoState, ProgressionResult } from '@/api/demo.types';
+import {
+  completeDemoQuest,
+  createDemoQuest,
+  deleteDemoQuest,
+  getDemoState,
+  moveDemoQuest,
+  resetDemoState,
+  updateDemoQuest,
+} from '@/api/demo';
+import type {
+  ApiError,
+  CreateQuestRequest,
+  DemoState,
+  MoveQuestRequest,
+  ProgressionResult,
+  Quest,
+  QuestStatus,
+  UpdateQuestRequest,
+} from '@/api/demo.types';
 import { progressionRealtime, type RealtimeStatus } from '@/realtime/progression';
 
 const DEFAULT_ERROR = 'Backend is unavailable. Check the server and try again.';
@@ -11,6 +28,8 @@ export const useDemoStore = defineStore('demo', () => {
   const state = ref<DemoState | null>(null);
   const loading = ref(false);
   const completingQuestId = ref<number | null>(null);
+  const creatingQuest = ref(false);
+  const mutatingQuestId = ref<number | null>(null);
   const resetting = ref(false);
   const error = ref<string | null>(null);
   const lastProgression = ref<ProgressionResult | null>(null);
@@ -43,7 +62,7 @@ export const useDemoStore = defineStore('demo', () => {
   }
 
   async function completeQuest(questId: number): Promise<ProgressionResult | null> {
-    if (completingQuestId.value !== null) {
+    if (completingQuestId.value !== null || mutatingQuestId.value !== null || creatingQuest.value) {
       return null;
     }
 
@@ -63,6 +82,52 @@ export const useDemoStore = defineStore('demo', () => {
       return null;
     } finally {
       completingQuestId.value = null;
+    }
+  }
+
+  async function createQuest(request: CreateQuestRequest): Promise<boolean> {
+    if (creatingQuest.value || mutatingQuestId.value !== null || completingQuestId.value !== null) {
+      return false;
+    }
+    creatingQuest.value = true;
+    error.value = null;
+    try {
+      state.value = await createDemoQuest(request);
+      return true;
+    } catch (cause) {
+      error.value = errorMessage(cause);
+      return false;
+    } finally {
+      creatingQuest.value = false;
+    }
+  }
+
+  async function updateQuest(questId: number, request: UpdateQuestRequest): Promise<boolean> {
+    return mutateQuest(questId, () => updateDemoQuest(questId, request));
+  }
+
+  async function deleteQuest(questId: number): Promise<boolean> {
+    return mutateQuest(questId, () => deleteDemoQuest(questId));
+  }
+
+  async function moveQuest(questId: number, request: MoveQuestRequest): Promise<boolean> {
+    return mutateQuest(questId, () => moveDemoQuest(questId, request));
+  }
+
+  async function mutateQuest(questId: number, request: () => Promise<DemoState>): Promise<boolean> {
+    if (creatingQuest.value || mutatingQuestId.value !== null || completingQuestId.value !== null) {
+      return false;
+    }
+    mutatingQuestId.value = questId;
+    error.value = null;
+    try {
+      state.value = await request();
+      return true;
+    } catch (cause) {
+      error.value = errorMessage(cause);
+      return false;
+    } finally {
+      mutatingQuestId.value = null;
     }
   }
 
@@ -98,7 +163,7 @@ export const useDemoStore = defineStore('demo', () => {
       state.value = {
         ...state.value,
         player: progression.player,
-        quests,
+        quests: sortQuests(quests),
         raid: progression.raid,
       };
     }
@@ -149,6 +214,8 @@ export const useDemoStore = defineStore('demo', () => {
     state,
     loading,
     completingQuestId,
+    creatingQuest,
+    mutatingQuestId,
     resetting,
     error,
     lastProgression,
@@ -156,10 +223,31 @@ export const useDemoStore = defineStore('demo', () => {
     hasState,
     loadState,
     completeQuest,
+    createQuest,
+    updateQuest,
+    deleteQuest,
+    moveQuest,
     resetDemo,
     startRealtime,
   };
 });
+
+const STATUS_ORDER: Record<QuestStatus, number> = {
+  BACKLOG: 0,
+  TODO: 1,
+  IN_PROGRESS: 2,
+  TESTING: 3,
+  DONE: 4,
+};
+
+function sortQuests(quests: Quest[]): Quest[] {
+  return [...quests].sort(
+    (left, right) =>
+      STATUS_ORDER[left.status] - STATUS_ORDER[right.status] ||
+      left.sortOrder - right.sortOrder ||
+      left.id - right.id,
+  );
+}
 
 function createEventId(): string {
   return typeof crypto.randomUUID === 'function'
