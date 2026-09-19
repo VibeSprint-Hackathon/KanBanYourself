@@ -15,13 +15,13 @@
 | A3 REST API | `DONE` | State, complete, DTO и единые ошибки |
 | B1 Типы и fixture | `DONE` | Типы совпадают с backend; fixture собирает UI отдельно |
 | B2 Dashboard | `DONE` | Главная сцена, карточки, drawer и адаптивная компоновка |
-| B3 Реакция прогресса | `PARTIAL` | Живая реакция готова; вкладки пока работают на fixture |
+| B3 Реакция прогресса | `PARTIAL` | Dashboard и Quests живые; Raids пока работает на fixture |
 | C1 Realtime | `DONE` | STOMP backend и Vue-клиент проверены end-to-end |
 | C2 Надёжный reset | `DONE` | `POST /api/demo/reset` атомарно восстанавливает seed |
 | I1 UI + backend API | `DONE` | Dashboard использует REST, Pinia и realtime |
 | B3b UI вкладок | `DONE` | `/quests` и `/raids` реализованы визуально на fixture |
-| I1Q Quests + backend | `NEXT` | Подключить доску к общему `DemoState` |
-| I1R Raids + backend | `PLANNED` | Подключить активный рейд и realtime |
+| I1Q Quests + backend | `DONE` | Доска использует общий `DemoState` и complete API |
+| I1R Raids + backend | `NEXT` | Подключить активный рейд и realtime |
 | I1W Запись и история | `OPTIONAL` | CRUD Квестов и история рейдов после MVP |
 | I2 Полный прогон | `PLANNED` | Три повторяемых цикла и проверка ошибок |
 | P1/P2 Полировка | `PLANNED` | Только после стабильного I2 |
@@ -45,8 +45,8 @@ Backend подтверждён 40 тестами на Java 21 и PostgreSQL 17. 
 - Типы `DemoState` и `ProgressionResult` соответствуют nullable-полям backend.
 - На `/` реализован светлый Dashboard с игроком, активным Квестом, drawer, XP и рейдом.
 - Dashboard читает серверное состояние через Pinia; fixture содержит только presentation-данные.
-- Маршруты `/quests` и `/raids` и их компоненты готовы визуально, но используют отдельные fixture.
-- Создание, редактирование, удаление и drag-and-drop Квестов пока меняют только память браузера.
+- `/quests` использует серверные Квесты, общий loading/error/realtime и complete API.
+- `/raids` готов визуально, но активный и завершённые рейды пока берёт из fixture.
 
 ### Поток C — доставка
 
@@ -95,9 +95,9 @@ Backend DTO, схема и формулы в I1 не меняются. Если 
 
 Добавлены отдельные вкладки `/quests` и `/raids`, карточки, drawer, состояния экрана и навигация. Это визуальная основа: данные Квестов, активного рейда и истории рейдов пока не являются серверными.
 
-## I1Q — подключить Quests к backend (`NEXT`)
+## I1Q — подключить Quests к backend (`DONE`)
 
-Цель — показать на `/quests` те же Квесты, которые вернул `GET /api/demo/state`, без второго доменного store.
+На `/quests` показаны те же Квесты, которые вернул `GET /api/demo/state`, без второго доменного store.
 
 1. Заменить `boardQuests` на вычисляемое представление `demoStore.state.quests`.
 2. Для MVP показывать только серверные статусы `TODO`, `IN_PROGRESS`, `DONE`; `BACKLOG` и `TESTING` не выдавать за сохранённые статусы.
@@ -108,7 +108,7 @@ Backend DTO, схема и формулы в I1 не меняются. Если 
 
 Готово, когда reset показывает три seed-Квеста в правильных колонках, complete одновременно обновляет Quests, Dashboard и Raid, а refresh не возвращает fixture.
 
-## I1R — подключить Raids к backend (`PLANNED`)
+## I1R — подключить Raids к backend (`NEXT`)
 
 Цель — сделать `/raids` вторым представлением того же серверного рейда.
 
@@ -134,4 +134,4 @@ Backend DTO, схема и формулы в I1 не меняются. Если 
 
 ## Ближайшая передача
 
-Вход следующей задачи: готовые визуальные вкладки и работающий `useDemoStore`. Выход I1Q: `/quests` использует серверные Квесты и не имитирует сохранение неподдерживаемых операций.
+Вход следующей задачи: Dashboard и Quests работают с одним серверным state. Выход I1R: `/raids` показывает тот же рейд и realtime-изменения без fixture доменных данных.

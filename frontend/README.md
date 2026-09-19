@@ -26,4 +26,4 @@ npm run build
 
 ## Текущая граница
 
-Dashboard использует типизированные GET/POST-функции, общий Pinia store и realtime. Fixture содержит только presentation-данные. Следующая задача — показать Квесты из общего state в колонках `TODO`, `IN_PROGRESS`, `DONE`. Не переносить расчёты XP, уровней, наград или урона во frontend.
+Dashboard и Quests используют типизированные GET/POST-функции, общий Pinia store и realtime. Следующая задача — подключить вкладку Raids к тому же state. Не переносить расчёты XP, уровней, наград или урона во frontend.

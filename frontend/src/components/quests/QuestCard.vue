@@ -17,7 +17,12 @@ const progress = computed(() => displayedProgress(props.entry));
 <template>
   <article
     class="quest-card"
-    :class="{ compact, dragging, completed: entry.columnId === 'DONE' }"
+    :class="{
+      compact,
+      dragging,
+      completed: entry.columnId === 'DONE',
+      'drag-disabled': dragDisabled,
+    }"
     :data-quest-id="entry.quest.id"
     :draggable="!dragDisabled"
     :style="{ '--column-accent': visual.color }"
@@ -57,6 +62,7 @@ const progress = computed(() => displayedProgress(props.entry));
       </div>
     </button>
     <span
+      v-if="!dragDisabled"
       class="drag-handle"
       :title="dragDisabled ? 'Clear search to drag quests' : 'Drag to move Quest'"
       aria-hidden="true"
@@ -73,6 +79,9 @@ const progress = computed(() => displayedProgress(props.entry));
   background: var(--card);
   box-shadow: 0 3px 7px #385b740a;
   cursor: grab;
+}
+.quest-card.drag-disabled {
+  cursor: default;
 }
 .quest-card:hover {
   border-color: var(--column-accent);

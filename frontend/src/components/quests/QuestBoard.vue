@@ -8,6 +8,7 @@ const props = defineProps<{
   quests: BoardQuest[];
   compact: boolean;
   searching: boolean;
+  readOnly: boolean;
   hideReason: (id: BoardColumnId) => string;
 }>();
 const emit = defineEmits<{
@@ -25,7 +26,7 @@ function endDrag() {
 }
 watch(() => props.searching, endDrag);
 function startDrag(id: number, event: DragEvent) {
-  if (props.searching || !event.dataTransfer) {
+  if (props.readOnly || props.searching || !event.dataTransfer) {
     event.preventDefault();
     return;
   }
@@ -73,6 +74,7 @@ function leaveBoard(event: DragEvent) {
       :quests="quests.filter((q) => q.columnId === column.id)"
       :compact="compact"
       :searching="searching"
+      :read-only="readOnly"
       :drag-id="dragId"
       :over="overColumn === column.id"
       :before-id="beforeId"

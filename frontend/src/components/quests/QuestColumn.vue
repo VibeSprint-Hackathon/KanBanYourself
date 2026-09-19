@@ -13,6 +13,7 @@ const props = defineProps<{
   first: boolean;
   last: boolean;
   hideReason: string;
+  readOnly: boolean;
 }>();
 const emit = defineEmits<{
   open: [id: number];
@@ -32,7 +33,11 @@ function insertionPoint(event: DragEvent): number | null {
   return card ? Number(card.dataset.questId) : null;
 }
 function dragOver(event: DragEvent) {
-  if (props.searching || !event.dataTransfer?.types.includes('application/x-vibesprint-quest'))
+  if (
+    props.readOnly ||
+    props.searching ||
+    !event.dataTransfer?.types.includes('application/x-vibesprint-quest')
+  )
     return;
   event.preventDefault();
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
@@ -43,7 +48,11 @@ function dragOver(event: DragEvent) {
   emit('hover', insertionPoint(event));
 }
 function drop(event: DragEvent) {
-  if (props.searching || !event.dataTransfer?.types.includes('application/x-vibesprint-quest'))
+  if (
+    props.readOnly ||
+    props.searching ||
+    !event.dataTransfer?.types.includes('application/x-vibesprint-quest')
+  )
     return;
   event.preventDefault();
   emit('drop', insertionPoint(event));
@@ -63,6 +72,7 @@ function drop(event: DragEvent) {
       <h2>{{ column.label }}</h2>
       <span class="column-count" :aria-label="`${quests.length} quests`">{{ quests.length }}</span>
       <q-btn
+        v-if="!readOnly"
         flat
         dense
         round
@@ -94,7 +104,7 @@ function drop(event: DragEvent) {
     <div
       class="column-content"
       tabindex="0"
-      :aria-label="`Drop quests in ${column.label}`"
+      :aria-label="readOnly ? `${column.label} quests` : `Drop quests in ${column.label}`"
       @dragover="dragOver"
       @drop="drop"
     >
@@ -107,7 +117,7 @@ function drop(event: DragEvent) {
         <QuestCard
           :entry="entry"
           :compact="compact"
-          :drag-disabled="searching"
+          :drag-disabled="readOnly || searching"
           :dragging="dragId === entry.quest.id"
           @open="emit('open', $event)"
           @start="(id, event) => emit('start', id, event)"
@@ -119,8 +129,16 @@ function drop(event: DragEvent) {
         :class="{ 'insert-before': over && beforeId === null, empty: !quests.length }"
       >
         <div v-if="!quests.length || over" class="drop-hint">
-          <strong>{{ searching ? 'No matching quests' : 'Move Quest here' }}</strong
-          ><span>{{ searching ? 'Try a different search.' : columnVisuals[column.id].empty }}</span>
+          <strong>{{
+            searching ? 'No matching quests' : readOnly ? 'No quests yet' : 'Move Quest here'
+          }}</strong
+          ><span>{{
+            searching
+              ? 'Try a different search.'
+              : readOnly
+                ? 'No server Quests in this status.'
+                : columnVisuals[column.id].empty
+          }}</span>
         </div>
       </div>
     </div>

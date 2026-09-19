@@ -1,142 +1,38 @@
+import type { Quest } from '@/api/demo.types';
 import type { BoardColumn, BoardQuest } from '@/components/quests/board.types';
 
 export const boardColumns: BoardColumn[] = [
-  { id: 'BACKLOG', label: 'Backlog', visible: true },
   { id: 'TODO', label: 'Todo', visible: true },
   { id: 'IN_PROGRESS', label: 'In Progress', visible: true },
-  { id: 'TESTING', label: 'Testing', visible: true },
   { id: 'DONE', label: 'Done', visible: true },
 ];
 
-export const boardQuests: BoardQuest[] = [
-  {
-    quest: {
-      id: 301,
-      title: 'Add keyboard shortcuts',
-      status: 'TODO',
-      xpReward: 250,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'BACKLOG',
-    description: 'Speed up the command palette and common actions.',
-    progress: null,
-  },
-  {
-    quest: {
-      id: 302,
-      title: 'Improve loading states',
-      status: 'TODO',
-      xpReward: 180,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'BACKLOG',
-    description: 'Make every wait feel clear and intentional.',
-    progress: null,
-  },
-  {
-    quest: {
-      id: 303,
-      title: 'Add achievement filters',
-      status: 'TODO',
-      xpReward: 320,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'TODO',
-    description: 'Find earned badges by category and rarity.',
-    progress: null,
-  },
-  {
-    quest: {
-      id: 304,
-      title: 'Improve profile settings',
-      status: 'TODO',
-      xpReward: 220,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'TODO',
-    description: 'Keep player preferences easy to find and update.',
-    progress: null,
-  },
-  {
-    quest: {
-      id: 305,
-      title: 'Ship the auth refactor',
-      status: 'IN_PROGRESS',
-      xpReward: 850,
-      assigneeId: 1,
-      externalReference: '#142 Auth refactor',
-    },
-    columnId: 'IN_PROGRESS',
-    description: 'Close the final review notes and merge before the sprint ends.',
+const questPresentation: Record<number, Pick<BoardQuest, 'description' | 'progress'>> = {
+  101: {
+    description: 'Fix server-side validation and cover the payment edge cases.',
     progress: 72,
   },
-  {
-    quest: {
-      id: 306,
-      title: 'Add profile rewards',
-      status: 'IN_PROGRESS',
-      xpReward: 420,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'IN_PROGRESS',
-    description: 'Surface earned badges on the player profile.',
-    progress: 35,
+  102: {
+    description: 'Warn users before API traffic reaches the configured rate limit.',
+    progress: null,
   },
-  {
-    quest: {
-      id: 307,
-      title: 'Validate GitHub webhook',
-      status: 'IN_PROGRESS',
-      xpReward: 350,
-      assigneeId: 1,
-      externalReference: '#148 Webhook validation',
-    },
-    columnId: 'TESTING',
-    description: 'Check event signatures and safe handling of retries.',
-    progress: 90,
-  },
-  {
-    quest: {
-      id: 308,
-      title: 'Test level-up animation',
-      status: 'IN_PROGRESS',
-      xpReward: 280,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'TESTING',
-    description: 'Review the reward moment and reduced motion state.',
-    progress: 85,
-  },
-  {
-    quest: {
-      id: 309,
-      title: 'Connect GitHub',
-      status: 'DONE',
-      xpReward: 300,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'DONE',
-    description: 'Link commits and pull requests to Quest progress.',
+  103: {
+    description: 'Make login failures clearer and easier to resolve.',
     progress: 100,
   },
-  {
-    quest: {
-      id: 310,
-      title: 'Create first Quest',
-      status: 'DONE',
-      xpReward: 120,
-      assigneeId: 1,
-      externalReference: null,
-    },
-    columnId: 'DONE',
-    description: 'Set the first goal for this developer journey.',
-    progress: 100,
-  },
-];
+};
+
+export function toBoardQuest(quest: Quest): BoardQuest {
+  const presentation = questPresentation[quest.id];
+  return {
+    quest,
+    columnId: quest.status,
+    description: presentation?.description ?? 'Quest details are managed by the backend.',
+    progress:
+      quest.status === 'DONE'
+        ? 100
+        : quest.status === 'IN_PROGRESS'
+          ? (presentation?.progress ?? 0)
+          : null,
+  };
+}
