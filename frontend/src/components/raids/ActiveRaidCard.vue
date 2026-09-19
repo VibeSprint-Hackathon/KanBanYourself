@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { mdiCheck, mdiFlashOutline, mdiSwordCross } from '@quasar/extras/mdi-v7';
+import type { Raid } from '@/api/demo.types';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
 import BossVisual from './BossVisual.vue';
-import { raidPercent, type RaidDamageFeedback, type RaidPresentation } from './raid.types';
+import { raidPercent, type RaidDamageFeedback } from './raid.types';
 
-const props = defineProps<{ entry: RaidPresentation; damage?: RaidDamageFeedback | null }>();
+const props = defineProps<{ raid: Raid; damage?: RaidDamageFeedback | null }>();
 defineEmits<{ open: [] }>();
-const defeated = computed(() => props.entry.raid.status === 'DEFEATED');
-const percent = computed(() => raidPercent(props.entry.raid));
+const defeated = computed(() => props.raid.status === 'DEFEATED');
+const percent = computed(() => raidPercent(props.raid));
 </script>
 
 <template>
@@ -30,7 +31,7 @@ const percent = computed(() => raidPercent(props.entry.raid));
           <div class="eyebrow" :class="defeated ? 'green' : 'red'">
             {{ defeated ? 'Boss defeated' : 'Active Raid' }}
           </div>
-          <h2>{{ entry.raid.name }}</h2>
+          <h2>{{ raid.name }}</h2>
         </div>
         <q-icon :name="mdiSwordCross" size="24px" :class="defeated ? 'green' : 'red'" />
       </header>
@@ -44,21 +45,21 @@ const percent = computed(() => raidPercent(props.entry.raid));
         <div v-else-if="defeated" class="damage-feedback victory">
           <q-icon :name="mdiCheck" size="20px" /> Raid complete
         </div>
-        <BossVisual :name="entry.raid.name" :defeated="defeated" />
+        <BossVisual :name="raid.name" :defeated="defeated" />
       </div>
     </div>
     <div class="raid-data-panel">
       <div>
         <div class="eyebrow muted">Boss HP</div>
         <div class="hp-value" :class="defeated ? 'green' : 'red'">
-          {{ formatNumber(entry.raid.currentHp) }}
-          <span>/ {{ formatNumber(entry.raid.maxHp) }}</span>
+          {{ formatNumber(raid.currentHp) }}
+          <span>/ {{ formatNumber(raid.maxHp) }}</span>
         </div>
         <strong class="remaining">{{ percent }}% remaining</strong>
         <q-linear-progress
           class="progress-track hp-progress"
           :class="{ 'defeated-progress': defeated }"
-          :value="entry.raid.maxHp > 0 ? entry.raid.currentHp / entry.raid.maxHp : 0"
+          :value="raid.maxHp > 0 ? raid.currentHp / raid.maxHp : 0"
           aria-label="Boss HP"
           size="23px"
         />
@@ -67,25 +68,11 @@ const percent = computed(() => raidPercent(props.entry.raid));
           <strong>-{{ formatNumber(damage.damageReceived) }} HP</strong>
         </div>
       </div>
-      <div>
-        <div class="raid-metrics">
-          <div class="metric contribution">
-            <span class="eyebrow muted">Your damage</span>
-            <strong>{{ formatNumber(entry.playerDamage) }}</strong>
-          </div>
-          <div class="metric reward">
-            <span class="eyebrow orange">{{ defeated ? 'Reward earned' : 'Raid reward' }}</span>
-            <strong>{{ defeated ? '+' : '' }}{{ formatNumber(entry.rewardXp) }} XP</strong>
-          </div>
-        </div>
-        <p :class="defeated ? 'green defeated-copy' : 'muted'">
-          {{
-            defeated
-              ? `${entry.raid.name} has been defeated.`
-              : 'Complete Quests to damage the Raid Boss.'
-          }}
-        </p>
-      </div>
+      <p :class="defeated ? 'green defeated-copy' : 'muted'">
+        {{
+          defeated ? `${raid.name} has been defeated.` : 'Complete Quests to damage the Raid Boss.'
+        }}
+      </p>
     </div>
   </q-card>
 </template>
@@ -191,30 +178,6 @@ h2 {
 }
 .damage-comparison strong {
   color: var(--red);
-}
-.raid-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.metric {
-  min-height: 85px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: #eaf6fd;
-}
-.metric.reward {
-  border-color: #efca8c;
-  background: #fff8ea99;
-}
-.metric strong {
-  display: block;
-  margin-top: 9px;
-  font-size: 19px;
-}
-.reward strong {
-  color: var(--orange);
 }
 .raid-data-panel p {
   margin: 22px 0 0;

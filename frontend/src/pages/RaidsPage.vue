@@ -1,41 +1,41 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import { mdiShieldOutline } from '@quasar/extras/mdi-v7';
 import ActiveRaidCard from '@/components/raids/ActiveRaidCard.vue';
-import CompletedRaidCard from '@/components/raids/CompletedRaidCard.vue';
 import RaidDetailsDrawer from '@/components/raids/RaidDetailsDrawer.vue';
-import type { RaidPreviewState } from '@/components/raids/raid.types';
-import {
-  completedRaidFixtures,
-  initialRaidPreviewState,
-  raidDamageFixture,
-  raidFixtures,
-  raidPagePresentation as view,
-} from '@/fixtures/raids.fixture';
+import type { RaidDamageFeedback } from '@/components/raids/raid.types';
+import { raidPagePresentation as view } from '@/fixtures/raids.fixture';
+import { useDemoStore } from '@/stores/demo';
 
-const route = useRoute();
+const store = useDemoStore();
+const { state, loading, error, realtimeStatus, lastProgression } = storeToRefs(store);
 const detailsOpen = ref(false);
-const previewStates: Record<string, RaidPreviewState> = {
-  active: 'ACTIVE',
-  damaged: 'DAMAGED',
-  defeated: 'DEFEATED',
-  empty: 'EMPTY',
-};
-const previewState = computed<RaidPreviewState>(() => {
-  if (!import.meta.env.DEV) return initialRaidPreviewState;
-  const requested = String(route.query.raidState ?? '').toLowerCase();
-  return previewStates[requested] ?? initialRaidPreviewState;
+const raid = computed(() => state.value?.raid ?? null);
+const damage = computed<RaidDamageFeedback | null>(() => {
+  const progression = lastProgression.value;
+  if (!progression?.applied || progression.raid.id !== raid.value?.id) {
+    return null;
+  }
+  return {
+    previousHp: Math.min(
+      progression.raid.maxHp,
+      progression.raid.currentHp + progression.raidDamage,
+    ),
+    damageReceived: progression.raidDamage,
+  };
 });
-const activeRaid = computed(() =>
-  previewState.value === 'EMPTY' ? null : raidFixtures[previewState.value],
-);
-const damage = computed(() => (previewState.value === 'DAMAGED' ? raidDamageFixture : null));
-const completedRaids = computed(() => {
-  const current = activeRaid.value?.raid.status === 'DEFEATED' ? [activeRaid.value] : [];
-  const ids = new Set(current.map(({ raid }) => raid.id));
-  return [...current, ...completedRaidFixtures.filter(({ raid }) => !ids.has(raid.id))];
+
+let stopRealtime: (() => void) | undefined;
+
+onMounted(() => {
+  stopRealtime = store.startRealtime();
+  if (state.value === null) {
+    void store.loadState();
+  }
 });
+
+onUnmounted(() => stopRealtime?.());
 </script>
 
 <template>
@@ -47,7 +47,11 @@ const completedRaids = computed(() => {
       </div>
       <div class="header-meta">
         <span class="github-sync muted">
-          <q-icon name="sensors" size="17px" class="green" />{{ view.syncLabel }}
+          <q-icon
+            name="sensors"
+            size="17px"
+            :class="realtimeStatus === 'connected' ? 'green' : 'orange'"
+          />{{ realtimeStatus === 'connected' ? 'Live sync' : 'Sync offline' }}
         </span>
         <span class="header-time"
           ><span class="muted">{{ view.dateLabel }}</span
@@ -61,32 +65,41 @@ const completedRaids = computed(() => {
       <p>Complete Quests together to bring down the active Boss.</p>
     </section>
 
-    <ActiveRaidCard
-      v-if="activeRaid"
-      :entry="activeRaid"
-      :damage="damage"
-      @open="detailsOpen = true"
-    />
-    <q-card v-else flat bordered class="empty-raid-card">
-      <div class="empty-icon"><q-icon :name="mdiShieldOutline" size="24px" /></div>
-      <h2>No active Raid</h2>
-      <p>The next Boss will appear when a new sprint begins.</p>
+    <q-card v-if="loading && !state" flat bordered class="state-card">
+      <q-spinner color="primary" size="34px" />
+      <strong>Loading Raid…</strong>
     </q-card>
+    <q-card v-else-if="!state" flat bordered class="state-card error-card">
+      <q-icon name="cloud_off" size="34px" class="red" />
+      <strong>Could not load Raid</strong>
+      <span class="muted">{{ error }}</span>
+      <q-btn unelevated no-caps label="Try again" color="primary" @click="store.loadState()" />
+    </q-card>
+    <template v-else>
+      <div v-if="error" class="sync-warning" role="alert">
+        <q-icon name="warning" size="19px" />
+        <span>{{ error }}</span>
+        <q-btn flat dense no-caps label="Retry" @click="store.loadState()" />
+      </div>
+      <ActiveRaidCard v-if="raid" :raid="raid" :damage="damage" @open="detailsOpen = true" />
+      <q-card v-else flat bordered class="empty-raid-card">
+        <div class="empty-icon"><q-icon :name="mdiShieldOutline" size="24px" /></div>
+        <h2>No active Raid</h2>
+        <p>The next Boss will appear when a new sprint begins.</p>
+      </q-card>
 
-    <section class="completed-section">
-      <div class="completed-heading spread">
-        <div>
-          <h2>Completed Raids</h2>
-          <p>Bosses defeated through team Quest progress.</p>
+      <section class="completed-section">
+        <div class="completed-heading">
+          <h2>Raid history</h2>
+          <p>Completed Raid history is not available in the current backend API.</p>
         </div>
-        <span class="muted">{{ completedRaids.length }} defeated</span>
-      </div>
-      <div class="completed-grid">
-        <CompletedRaidCard v-for="entry in completedRaids" :key="entry.raid.id" :entry="entry" />
-      </div>
-    </section>
+        <q-card flat bordered class="history-note muted">
+          This demo shows the current team Raid only.
+        </q-card>
+      </section>
 
-    <RaidDetailsDrawer v-if="activeRaid" v-model="detailsOpen" :entry="activeRaid" />
+      <RaidDetailsDrawer v-if="raid" v-model="detailsOpen" :raid="raid" />
+    </template>
   </q-page>
 </template>
 
@@ -166,6 +179,31 @@ h1 {
   color: var(--blue);
   background: #e5f3fb;
 }
+.state-card {
+  display: grid;
+  min-height: 430px;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.error-card {
+  border-color: #ffaaa3;
+}
+.sync-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  color: #75442d;
+  border: 1px solid #efca8c;
+  border-radius: 6px;
+  background: #fff0d4;
+}
+.sync-warning span {
+  flex: 1;
+}
 .empty-raid-card h2 {
   font-size: 24px;
 }
@@ -173,16 +211,11 @@ h1 {
   margin-top: 27px;
 }
 .completed-heading {
-  align-items: flex-end;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
-.completed-heading > span {
-  font: 13px monospace;
-}
-.completed-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+.history-note {
+  padding: 20px;
+  border-style: dashed;
 }
 @media (max-width: 1200px) {
   .raids-page {
@@ -193,9 +226,6 @@ h1 {
   .header-time {
     display: none;
   }
-  .completed-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 @media (max-width: 700px) {
   .raids-page {
@@ -204,9 +234,6 @@ h1 {
   .page-header {
     flex-wrap: wrap;
     gap: 12px;
-  }
-  .completed-grid {
-    grid-template-columns: 1fr;
   }
 }
 </style>

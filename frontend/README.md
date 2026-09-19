@@ -26,4 +26,4 @@ npm run build
 
 ## Текущая граница
 
-Dashboard и Quests используют типизированные GET/POST-функции, общий Pinia store и realtime. Следующая задача — подключить вкладку Raids к тому же state. Не переносить расчёты XP, уровней, наград или урона во frontend.
+Dashboard, Quests и Raids используют типизированные GET/POST-функции, общий Pinia store и realtime. Следующая задача — полный прогон I2. Не переносить расчёты XP, уровней, наград или урона во frontend.

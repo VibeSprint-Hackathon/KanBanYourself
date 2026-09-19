@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { Raid } from '@/api/demo.types';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
-import { raidPercent, type RaidPresentation } from './raid.types';
+import { raidPercent } from './raid.types';
 
 const open = defineModel<boolean>({ required: true });
-const props = defineProps<{ entry: RaidPresentation }>();
-const defeated = computed(() => props.entry.raid.status === 'DEFEATED');
-const percent = computed(() => raidPercent(props.entry.raid));
+const props = defineProps<{ raid: Raid }>();
+const defeated = computed(() => props.raid.status === 'DEFEATED');
+const percent = computed(() => raidPercent(props.raid));
 </script>
 
 <template>
@@ -22,7 +23,7 @@ const percent = computed(() => raidPercent(props.entry.raid));
       <header class="drawer-header spread">
         <div>
           <div class="eyebrow blue">Raid details</div>
-          <h2 id="raid-details-title">{{ entry.raid.name }}</h2>
+          <h2 id="raid-details-title">{{ raid.name }}</h2>
         </div>
         <q-btn
           flat
@@ -36,7 +37,7 @@ const percent = computed(() => raidPercent(props.entry.raid));
       <div class="drawer-body">
         <div class="spread">
           <span class="eyebrow muted">Status</span>
-          <span class="raid-badge" :class="{ defeated }">● {{ entry.raid.status }}</span>
+          <span class="raid-badge" :class="{ defeated }">● {{ raid.status }}</span>
         </div>
         <section>
           <div class="spread">
@@ -44,24 +45,16 @@ const percent = computed(() => raidPercent(props.entry.raid));
             <strong :class="defeated ? 'green' : 'red'">{{ percent }}%</strong>
           </div>
           <div class="drawer-hp">
-            {{ formatNumber(entry.raid.currentHp) }} / {{ formatNumber(entry.raid.maxHp) }}
+            {{ formatNumber(raid.currentHp) }} / {{ formatNumber(raid.maxHp) }}
           </div>
           <q-linear-progress
             class="progress-track hp-progress"
             :class="{ 'defeated-progress': defeated }"
-            :value="entry.raid.maxHp > 0 ? entry.raid.currentHp / entry.raid.maxHp : 0"
+            :value="raid.maxHp > 0 ? raid.currentHp / raid.maxHp : 0"
             aria-label="Boss HP"
             size="13px"
           />
         </section>
-        <div class="contribution-box">
-          <span class="eyebrow muted">Your contribution</span>
-          <strong>{{ formatNumber(entry.playerDamage) }} damage</strong>
-        </div>
-        <div class="reward-box spread">
-          <span class="eyebrow orange">{{ defeated ? 'Reward earned' : 'Reward' }}</span>
-          <strong>{{ formatNumber(entry.rewardXp) }} XP</strong>
-        </div>
         <section>
           <h3 class="eyebrow muted">How Raids work</h3>
           <p>Complete Quests to damage the Raid Boss.</p>
@@ -140,27 +133,6 @@ section h3 {
 .defeated-progress {
   color: var(--green);
   border-color: #abd8c7;
-}
-.contribution-box,
-.reward-box {
-  margin-top: 20px;
-  padding: 15px 16px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: #eaf6fd;
-}
-.contribution-box strong {
-  display: block;
-  margin-top: 9px;
-  font-size: 18px;
-}
-.reward-box {
-  border-color: #efca8c;
-  background: #fff8ea99;
-}
-.reward-box strong {
-  color: var(--orange);
-  font-size: 19px;
 }
 section p {
   margin: 12px 0 0;

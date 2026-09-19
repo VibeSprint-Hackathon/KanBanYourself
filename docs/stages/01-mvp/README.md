@@ -1,7 +1,7 @@
 # Этап 01 — MVP
 
 Статус: `ACTIVE`  
-Текущий подэтап: `I1R — NEXT: подключить Raids к backend`
+Текущий подэтап: `I2 — NEXT: проверить полный вертикальный сценарий`
 
 ## Результат этапа
 
@@ -31,14 +31,15 @@
 - A3: `GET /api/demo/state`, `POST /api/demo/quests/{questId}/complete`, DTO, validation и единые ошибки.
 - Проверка: 40 backend-тестов, 0 ошибок, Java 21 и PostgreSQL 17.
 
-### Поток B — `B1/B2/I1/B3b/I1Q DONE`, `B3 PARTIAL`
+### Поток B — `DONE`
 
 - Типы `DemoState`/`ProgressionResult` соответствуют REST-контракту и nullable-полям.
 - Реализован Dashboard на `/`: layout, игрок, активный Квест, drawer, XP, рейд, toast и адаптивность.
 - Dashboard загружает state, завершает Квест и сбрасывает демо через backend API.
 - Pinia хранит единый state для layout, Dashboard и realtime; loading/error/retry готовы.
 - `/quests` показывает серверные Квесты в `TODO`, `IN_PROGRESS`, `DONE` и завершает их через общий API.
-- `/raids` пока использует fixture; история рейдов не поддерживается backend.
+- `/raids` показывает серверный рейд, фактический последний урон и realtime-изменения.
+- История рейдов и отсутствующие в API метрики не подменяются fixture.
 - Проверка: frontend typecheck и production build проходят.
 
 ### Поток C — `DONE`
@@ -50,7 +51,7 @@
 
 ## Текущее ограничение
 
-Dashboard и Quests используют один серверный state. Вкладка Raids пока имеет отдельное fixture-состояние, поэтому три экрана ещё не образуют один серверный сценарий.
+CRUD Квестов и история рейдов отсутствуют в backend и не входят в обязательный MVP. Следующая задача — подтвердить стабильность уже собранного сценария тремя полными прогонами.
 
 ## Следующие подэтапы
 
@@ -58,22 +59,26 @@ Dashboard и Quests используют один серверный state. Вк
 
 `/quests` подключён к `demoStore.state.quests`; серверные Create/Edit/Delete/drag скрыты. Живая проверка подтвердила перемещение Квеста и синхронизацию Dashboard.
 
-### I1R — `NEXT`
+### I1R — `DONE`
 
-Подключить `/raids` к `demoStore.state.raid` и `ProgressionResult`. Историю и отсутствующие в API метрики не подменять fixture.
+`/raids` подключён к `demoStore.state.raid` и `ProgressionResult`. Живая проверка подтвердила переход 180 HP `ACTIVE` -> 0 HP `DEFEATED` через STOMP без перезагрузки.
 
-Точный порядок описан в [IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md#i1q--подключить-quests-к-backend-next).
+### I2 — `NEXT`
+
+Трижды пройти `reset -> load всех вкладок -> complete -> repeat -> refresh`, затем проверить отказ backend и realtime.
+
+Точный порядок описан в [IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md#i2--проверить-вертикальный-сценарий-next).
 
 ## Контрольные точки
 
 1. Контракт 0.1/0.2 — `DONE`.
 2. A1/A2/A3 — `DONE`.
-3. B1/B2 — `DONE`; B3 — `PARTIAL`.
+3. B1/B2/B3 — `DONE`.
 4. C1/C2 — `DONE`.
 5. I1 UI + backend — `DONE`.
 6. B3b визуальные вкладки — `DONE`.
-7. I1Q Quests + backend — `DONE`; I1R Raids + backend — `NEXT`.
-8. I2 три полных прогона по всем вкладкам — `PLANNED`.
+7. I1Q Quests + backend — `DONE`; I1R Raids + backend — `DONE`.
+8. I2 три полных прогона по всем вкладкам — `NEXT`.
 
 ## Проверка завершения этапа
 
@@ -85,4 +90,4 @@ Dashboard и Quests используют один серверный state. Вк
 
 ## Передача дальше
 
-Подключить Raids к общему серверному state и выполнить I2. Полный CRUD, история рейдов, дополнительная анимация и GitHub webhook не блокируют MVP.
+Выполнить I2. Полный CRUD, история рейдов, дополнительная анимация и GitHub webhook не блокируют MVP.
