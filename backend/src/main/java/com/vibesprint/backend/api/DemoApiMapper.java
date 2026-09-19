@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 public class DemoApiMapper {
 
     public ProgressionResponse toResponse(ProgressionResult result) {
+        return toResponse(result, "DEMO", false);
+    }
+
+    public ProgressionResponse toResponse(ProgressionResult result, String source, boolean duplicate) {
         return new ProgressionResponse(
                 result.eventId(),
                 result.applied(),
@@ -24,7 +28,9 @@ public class DemoApiMapper {
                 result.bossDefeated(),
                 toQuest(result.quest()),
                 toPlayer(result.player()),
-                toRaid(result.raid())
+                toRaid(result.raid()),
+                source,
+                duplicate
         );
     }
 

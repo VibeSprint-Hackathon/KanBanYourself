@@ -17,6 +17,10 @@ const routes: RouteRecordRaw[] = [
         path: 'raids',
         component: () => import('@/pages/RaidsPage.vue'),
       },
+      {
+        path: 'achievements',
+        component: () => import('@/pages/AchievementsPage.vue'),
+      },
     ],
   },
 

@@ -173,6 +173,81 @@ class DemoApiTests {
     }
 
     @Test
+    void closesLinkedGithubIssueAndAppliesQuestProgress() throws Exception {
+        jdbcTemplate.update(
+                "update quest set external_reference = ? where id = 101",
+                "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
+        );
+
+        String body = """
+                {
+                  "action": "closed",
+                  "issue": {
+                    "number": 42,
+                    "state": "closed",
+                    "repository": {
+                      "full_name": "VibeSprint-Hackathon/KanBanYourself"
+                    },
+                    "html_url": "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
+                  }
+                }
+                """;
+
+        mockMvc.perform(post("/api/integrations/github/issues/webhook")
+                        .header("X-GitHub-Event", "issues")
+                        .header("X-GitHub-Delivery", "github-delivery-42")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applied").value(true))
+                .andExpect(jsonPath("$.quest.status").value("DONE"))
+                .andExpect(jsonPath("$.player.totalXp").value(1100))
+                .andExpect(jsonPath("$.source").value("GITHUB"));
+
+        mockMvc.perform(get("/api/demo/state"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.quests[0].status").value("DONE"));
+    }
+
+    @Test
+    void ignoresDuplicateGithubDeliveryIds() throws Exception {
+        jdbcTemplate.update(
+                "update quest set external_reference = ? where id = 101",
+                "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
+        );
+
+        String body = """
+                {
+                  "action": "closed",
+                  "issue": {
+                    "number": 42,
+                    "state": "closed",
+                    "repository": {
+                      "full_name": "VibeSprint-Hackathon/KanBanYourself"
+                    },
+                    "html_url": "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
+                  }
+                }
+                """;
+
+        mockMvc.perform(post("/api/integrations/github/issues/webhook")
+                        .header("X-GitHub-Event", "issues")
+                        .header("X-GitHub-Delivery", "duplicate-delivery")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.applied").value(true));
+
+        mockMvc.perform(post("/api/integrations/github/issues/webhook")
+                        .header("X-GitHub-Event", "issues")
+                        .header("X-GitHub-Delivery", "duplicate-delivery")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.duplicate").value(true));
+    }
+
+    @Test
     void mapsInvalidRequestsToStableError() throws Exception {
         mockMvc.perform(post("/api/demo/quests/0/complete")
                         .contentType("application/json")
