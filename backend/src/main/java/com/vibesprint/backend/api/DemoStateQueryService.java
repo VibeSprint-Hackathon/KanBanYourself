@@ -54,30 +54,21 @@ public class DemoStateQueryService {
         Raid raid = raidRepository.findByStatus(com.vibesprint.backend.raid.RaidStatus.ACTIVE).orElse(null);
         List<Quest> quests = questRepository.findAllInBoardOrder();
 
-        List<DemoStateResponse.QuestView> mergedQuests = new ArrayList<>();
         Map<String, DemoStateResponse.QuestView> byReference = new LinkedHashMap<>();
 
         for (Quest quest : quests) {
-            DemoStateResponse.QuestView view = mapper.toQuest(quest);
-            if (view.externalReference() != null && !view.externalReference().isBlank()) {
-                byReference.put(view.externalReference(), view);
-            } else {
-                byReference.put("local:" + view.id(), view);
-            }
-            mergedQuests.add(view);
+            putQuestView(byReference, mapper.toQuest(quest));
         }
 
         for (DemoStateResponse.QuestView runtimeQuest : gitHubRuntimeIssueStore.snapshot()) {
-            String key = runtimeQuest.externalReference() != null && !runtimeQuest.externalReference().isBlank()
-                    ? runtimeQuest.externalReference()
-                    : "github:" + runtimeQuest.id();
-            byReference.put(key, runtimeQuest);
-            mergedQuests.add(runtimeQuest);
+            putQuestView(byReference, runtimeQuest);
         }
 
+        List<DemoStateResponse.QuestView> payloadQuests = new ArrayList<>(byReference.values());
+
         return new DemoStateResponse(
-                mapPlayersFromViews(players, mergedQuests),
-                new ArrayList<>(byReference.values()),
+                mapPlayersFromViews(players, payloadQuests),
+                payloadQuests,
                 mapper.toRaid(raid)
         );
     }
@@ -96,6 +87,15 @@ public class DemoStateQueryService {
             );
             return mapper.toPlayer(player, progressionRules.describe(player.getTotalXp()), hasActiveQuest);
         }).toList();
+    }
+
+    private void putQuestView(Map<String, DemoStateResponse.QuestView> byReference, DemoStateResponse.QuestView questView) {
+        String key = questView.id() > 0
+                ? "id:" + questView.id()
+                : questView.externalReference() != null && !questView.externalReference().isBlank()
+                    ? "ref:" + questView.externalReference()
+                    : "local:" + System.identityHashCode(questView);
+        byReference.put(key, questView);
     }
 
     private List<DemoStateResponse.PlayerView> mapPlayersFromViews(List<Player> players, List<DemoStateResponse.QuestView> quests) {
