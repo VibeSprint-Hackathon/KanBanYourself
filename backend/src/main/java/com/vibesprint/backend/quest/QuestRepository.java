@@ -13,6 +13,8 @@ public interface QuestRepository extends JpaRepository<Quest, Long> {
 
     List<Quest> findAllByOrderByIdAsc();
 
+    Optional<Quest> findByExternalReference(String externalReference);
+
     boolean existsByStatus(QuestStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

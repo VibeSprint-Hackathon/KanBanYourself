@@ -12,7 +12,9 @@ public record ProgressionResponse(
         boolean bossDefeated,
         DemoStateResponse.QuestView quest,
         DemoStateResponse.PlayerView player,
-        DemoStateResponse.RaidView raid
+        DemoStateResponse.RaidView raid,
+        String source,
+        boolean duplicate
 ) {
 
     public record CosmeticView(String key, String displayName) {
