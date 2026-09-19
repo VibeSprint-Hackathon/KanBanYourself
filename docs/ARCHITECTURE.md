@@ -5,8 +5,7 @@
 - Бэкенд: Java 21, Spring Boot 4.1.1, Maven, Spring MVC, JPA, Validation, Liquibase, зависимость WebSocket.
 - Фронтенд: Vue 3, TypeScript, Quasar 2, Composition API, Axios, Vue Router; Pinia установлена, но не используется.
 - База данных: PostgreSQL 17 через Docker Compose.
-- Реализовано: доменное хранение, сервис прогресса, REST API демо, атомарный reset, STOMP-канал и Dashboard на fixture.
-- Следующая граница I1: заменить доменный fixture Dashboard живыми REST-вызовами и применением realtime-событий.
+- Реализовано: доменное хранение, CRUD Квестов и Raid, сервис прогресса, атомарный reset, STOMP-канал и живой Vue-интерфейс.
 
 ## Границы
 
@@ -29,9 +28,11 @@ GitHub или демо-триггер
 
 ## Основной поток данных
 
-Чтение выполняется через `GET /api/demo/state`. Команда завершения входит в одну транзакцию сервиса и возвращает `ProgressionResponse`, представленный на фронтенде типом `ProgressionResult`. Тот же JSON отправляется подключённым STOMP-клиентам.
+Чтение Dashboard выполняется через `GET /api/demo/state`, а управление Raid — через `/api/raids`. Команда завершения входит в одну транзакцию сервиса и возвращает `ProgressionResponse`, представленный на фронтенде типом `ProgressionResult`. Тот же JSON отправляется подключённым STOMP-клиентам.
 
 Повторное завершение не должно повторно начислять прогресс. Это гарантирует сервис и модель хранения, а не только интерфейс.
+
+Raid имеет lifecycle `DRAFT → ACTIVE → COMPLETED` и `DRAFT/ACTIVE → CANCELLED`. В БД и сервисе разрешён максимум один `ACTIVE`. Только он получает урон; отсутствие активного Raid не мешает завершению Квеста и начислению XP.
 
 ## Realtime
 

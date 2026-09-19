@@ -7,6 +7,7 @@ import com.vibesprint.backend.quest.QuestRepository;
 import com.vibesprint.backend.quest.QuestStatus;
 import com.vibesprint.backend.raid.Raid;
 import com.vibesprint.backend.raid.RaidRepository;
+import com.vibesprint.backend.raid.RaidStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +42,7 @@ public class ProgressionService {
         long playerId = quest.getAssignee().getId();
         Player player = playerRepository.findByIdForUpdate(playerId)
                 .orElseThrow(() -> new DemoStateNotReadyException("Player " + playerId + " is not ready"));
-        Raid raid = raidRepository.findFirstForUpdate()
-                .orElseThrow(() -> new DemoStateNotReadyException("Raid is not ready"));
+        Raid raid = raidRepository.findActiveForUpdate().orElse(null);
 
         if (quest.getStatus() == QuestStatus.DONE) {
             return resultForAlreadyCompleted(command, quest, player, raid);
@@ -58,7 +58,11 @@ public class ProgressionService {
                 .orElse(0) + 100;
         quest.complete(doneSortOrder);
         player.addXp(xpGained);
-        raid.applyDamage(xpGained);
+        int raidDamage = 0;
+        if (raid != null) {
+            raid.applyDamage(xpGained);
+            raidDamage = xpGained;
+        }
 
         ProgressionRules.PlayerProgress currentProgress = progressionRules.describe(player.getTotalXp());
         boolean levelUp = currentProgress.level() > previousProgress.level();
@@ -71,7 +75,7 @@ public class ProgressionService {
                 true,
                 null,
                 xpGained,
-                xpGained,
+                raidDamage,
                 levelUp,
                 unlockedCosmetic,
                 levelUp ? ProgressionResult.Reaction.LEVEL_UP : ProgressionResult.Reaction.HAPPY,
@@ -119,7 +123,7 @@ public class ProgressionService {
             Raid raid
     ) {
         boolean hasActiveQuest = questRepository.existsByStatus(QuestStatus.IN_PROGRESS);
-        boolean bossDefeated = raid.getCurrentHp() == 0;
+        boolean bossDefeated = raid != null && raid.getStatus() == RaidStatus.COMPLETED;
 
         return new ProgressionResult(
                 eventId,
@@ -152,12 +156,14 @@ public class ProgressionService {
                         playerProgress.cosmeticKey(),
                         hasActiveQuest ? ProgressionResult.CharacterState.CODING : ProgressionResult.CharacterState.IDLE
                 ),
-                new ProgressionResult.RaidSnapshot(
+                raid == null ? null : new ProgressionResult.RaidSnapshot(
                         raid.getId(),
                         raid.getName(),
+                        raid.getDescription(),
                         raid.getMaxHp(),
                         raid.getCurrentHp(),
-                        bossDefeated ? ProgressionResult.RaidStatus.DEFEATED : ProgressionResult.RaidStatus.ACTIVE
+                        raid.getStatus(),
+                        raid.getExternalReference()
                 )
         );
     }

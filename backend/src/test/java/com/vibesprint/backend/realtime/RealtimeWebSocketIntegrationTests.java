@@ -83,7 +83,9 @@ class RealtimeWebSocketIntegrationTests {
                 true,
                 null,
                 null,
-                null
+                null,
+                "DEMO",
+                false
         );
     }
 }

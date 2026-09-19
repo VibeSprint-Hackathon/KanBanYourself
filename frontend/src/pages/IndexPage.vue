@@ -92,7 +92,12 @@ async function handleCompleteQuest() {
           :next-unlock="state.nextUnlock"
           :presentation="view.player"
           :reaction="reaction"
-        /><RaidBossCard :raid="state.raid" :presentation="view.raid" />
+        /><RaidBossCard v-if="state.raid" :raid="state.raid" :presentation="view.raid" />
+        <q-card v-else flat bordered class="dashboard-card no-raid-card">
+          <q-icon name="shield" size="34px" class="blue" />
+          <h2>No active Raid</h2>
+          <p class="muted">Activate a prepared Raid to start dealing team damage.</p>
+        </q-card>
       </div>
       <div class="dashboard-bottom">
         <ActiveQuestCard
@@ -220,6 +225,19 @@ async function handleCompleteQuest() {
 .small-card {
   padding: 24px 22px;
   min-height: 224px;
+}
+.no-raid-card {
+  display: grid;
+  min-height: 486px;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+.no-raid-card h2 {
+  margin: 14px 0 5px;
+}
+.no-raid-card p {
+  margin: 0;
 }
 .small-card-top {
   margin-bottom: 31px;

@@ -31,6 +31,7 @@ public class DemoResetService {
         jdbcTemplate.update("delete from raid");
         jdbcTemplate.update("delete from player");
         jdbcTemplate.execute("alter sequence quest_id_seq restart with 1000");
+        jdbcTemplate.execute("alter sequence raid_id_seq restart with 1000");
 
         jdbcTemplate.update(
                 "insert into player (id, name, total_xp) values (?, ?, ?)",
@@ -82,12 +83,23 @@ public class DemoResetService {
                 "TESTING", 85, 280, null, 300);
         insertQuest(110L, "Connect GitHub", "Link commits and pull requests to Quest progress.",
                 "DONE", 100, 300, null, 200);
-        jdbcTemplate.update(
-                "insert into raid (id, name, max_hp, current_hp) values (?, ?, ?, ?)",
+        insertRaid(
                 201L,
                 "Merge Conflict Hydra",
+                "Defeat the merge conflicts blocking the team sprint.",
                 1000,
-                180
+                180,
+                "ACTIVE",
+                null
+        );
+        insertRaid(
+                202L,
+                "Release Deadline Golem",
+                "Prepare the next release and clear the final blockers.",
+                1600,
+                1600,
+                "DRAFT",
+                null
         );
 
         entityManager.clear();
@@ -119,6 +131,31 @@ public class DemoResetService {
                 1L,
                 externalReference,
                 sortOrder
+        );
+    }
+
+    private void insertRaid(
+            long id,
+            String name,
+            String description,
+            int maxHp,
+            int currentHp,
+            String status,
+            String externalReference
+    ) {
+        jdbcTemplate.update(
+                """
+                insert into raid
+                    (id, name, description, max_hp, current_hp, status, external_reference)
+                values (?, ?, ?, ?, ?, ?, ?)
+                """,
+                id,
+                name,
+                description,
+                maxHp,
+                currentHp,
+                status,
+                externalReference
         );
     }
 }

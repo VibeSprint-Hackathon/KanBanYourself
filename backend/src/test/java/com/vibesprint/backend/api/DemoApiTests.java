@@ -88,7 +88,7 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.quest.sortOrder").value(300))
                 .andExpect(jsonPath("$.player.totalXp").value(1100))
                 .andExpect(jsonPath("$.player.characterState").value("idle"))
-                .andExpect(jsonPath("$.raid.status").value("DEFEATED"));
+                .andExpect(jsonPath("$.raid.status").value("COMPLETED"));
 
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
@@ -96,7 +96,7 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.quests[9].id").value(101))
                 .andExpect(jsonPath("$.quests[9].status").value("DONE"))
                 .andExpect(jsonPath("$.quests[9].progress").value(100))
-                .andExpect(jsonPath("$.raid.currentHp").value(0))
+                .andExpect(jsonPath("$.raid").value(nullValue()))
                 .andExpect(jsonPath("$.nextUnlock").value(nullValue()));
     }
 
@@ -128,7 +128,7 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.quest.progress").value(100))
                 .andExpect(jsonPath("$.quest.sortOrder").value(300))
                 .andExpect(jsonPath("$.player.totalXp").value(1100))
-                .andExpect(jsonPath("$.raid.currentHp").value(0));
+                .andExpect(jsonPath("$.raid").value(nullValue()));
     }
 
     @Test
@@ -159,7 +159,10 @@ class DemoApiTests {
     void resetRecoversMissingAndRemovesUnexpectedDemoData() throws Exception {
         jdbcTemplate.update("delete from raid");
         jdbcTemplate.update(
-                "insert into raid (id, name, max_hp, current_hp) values (999, 'Unexpected Raid', 10, 10)"
+                """
+                insert into raid (id, name, description, max_hp, current_hp, status)
+                values (999, 'Unexpected Raid', 'Unexpected', 10, 10, 'ACTIVE')
+                """
         );
 
         mockMvc.perform(post("/api/demo/reset"))
@@ -206,7 +209,8 @@ class DemoApiTests {
 
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.quests[0].status").value("DONE"));
+                .andExpect(jsonPath("$.quests[9].id").value(101))
+                .andExpect(jsonPath("$.quests[9].status").value("DONE"));
     }
 
     @Test
@@ -279,12 +283,12 @@ class DemoApiTests {
     }
 
     @Test
-    void mapsIncompleteDemoStateToConflict() throws Exception {
+    void returnsStateWithoutActiveRaid() throws Exception {
         jdbcTemplate.update("delete from raid");
 
         mockMvc.perform(get("/api/demo/state"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("DEMO_STATE_NOT_READY"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.raid").value(nullValue()));
     }
 
     @Test

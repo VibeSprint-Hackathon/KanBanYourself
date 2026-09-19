@@ -2,20 +2,28 @@
 
 ## Назначение
 
-HTTP API для Dashboard и пятиколоночной доски. Базовый адрес: `http://localhost:8080`. Аутентификации в демо нет; JSON-запросы используют `Content-Type: application/json`.
+HTTP API для Dashboard, доски и управления Raid. Базовый адрес: `http://localhost:8080`. Аутентификации в демо нет; JSON-запросы используют `Content-Type: application/json`.
 
 ## Endpoint
 
-| Метод и путь | Успех | Назначение |
-|---|---:|---|
-| `GET /api/health` | 200 | Проверка запуска |
-| `GET /api/demo/state` | 200 | Полный снимок демо |
-| `POST /api/demo/reset` | 200 | Восстановление точного seed |
-| `POST /api/demo/quests` | 201 | Создание Квеста |
-| `PUT /api/demo/quests/{id}` | 200 | Обновление Квеста |
-| `PATCH /api/demo/quests/{id}/move` | 200 | Перемещение/сортировка |
-| `DELETE /api/demo/quests/{id}` | 200 | Удаление незавершённого Квеста |
-| `POST /api/demo/quests/{id}/complete` | 200 | Завершение и прогресс игрока/рейда |
+| Метод и путь                          | Успех | Назначение                         |
+| ------------------------------------- | ----: | ---------------------------------- |
+| `GET /api/health`                     |   200 | Проверка запуска                   |
+| `GET /api/demo/state`                 |   200 | Полный снимок демо                 |
+| `POST /api/demo/reset`                |   200 | Восстановление точного seed        |
+| `POST /api/demo/quests`               |   201 | Создание Квеста                    |
+| `PUT /api/demo/quests/{id}`           |   200 | Обновление Квеста                  |
+| `PATCH /api/demo/quests/{id}/move`    |   200 | Перемещение/сортировка             |
+| `DELETE /api/demo/quests/{id}`        |   200 | Удаление незавершённого Квеста     |
+| `POST /api/demo/quests/{id}/complete` |   200 | Завершение и прогресс игрока/рейда |
+| `GET /api/raids`                      |   200 | Все Raid для Active/Draft/History  |
+| `GET /api/raids/{id}`                 |   200 | Один Raid                          |
+| `POST /api/raids`                     |   201 | Создание `DRAFT`                   |
+| `PUT /api/raids/{id}`                 |   200 | Безопасное редактирование          |
+| `POST /api/raids/{id}/activate`       |   200 | Активация draft                    |
+| `POST /api/raids/{id}/cancel`         |   200 | Отмена draft/active                |
+| `POST /api/raids/{id}/complete`       |   200 | Административное завершение без XP |
+| `DELETE /api/raids/{id}`              |   204 | Удаление только draft              |
 
 Все четыре обычные мутации Квеста возвращают полный актуальный `DemoStateResponse`.
 
@@ -48,7 +56,18 @@ HTTP API для Dashboard и пятиколоночной доски. Базов
 
 ### `GET /api/demo/state`
 
-Возвращает `player`, десять упорядоченных `quests`, `raid` и nullable `nextUnlock`. Reset возвращает ту же форму. Исходные ключевые значения: игрок 1 с 920 XP, Квест 101 `IN_PROGRESS`/72/180 XP, рейд 201 с 180 из 1000 HP.
+Возвращает `player`, десять упорядоченных `quests`, nullable активный `raid` и nullable `nextUnlock`. Reset возвращает ту же форму. Исходные ключевые значения: игрок 1 с 920 XP, Квест 101 `IN_PROGRESS`/72/180 XP, активный Raid 201 с 180 из 1000 HP.
+
+## Raid lifecycle
+
+Raid имеет поля `id`, `name`, `description`, `maxHp`, `currentHp`, `status`, `externalReference`. Новый Raid всегда `DRAFT`, а `currentHp=maxHp`.
+
+- `DRAFT`: редактируется и удаляется, но не получает damage.
+- `ACTIVE`: максимум один; получает damage от Quest completion.
+- `COMPLETED`: `currentHp=0`, хранится в истории и не удаляется.
+- `CANCELLED`: хранится в истории и не получает damage.
+
+Activation не заменяет текущий Raid молча и возвращает `409 RAID_CONFLICT`. При изменении `maxHp` активного Raid сохраняется уже нанесённый урон. У финальных Raid HP immutable, метаданные редактируются. `complete` не выдаёт XP и не имитирует Quest completion.
 
 ## Создание
 
@@ -99,12 +118,12 @@ HTTP API для Dashboard и пятиколоночной доски. Базов
 ### `POST /api/demo/quests/{id}/complete`
 
 ```json
-{"eventId":"demo-payment-validation-1","source":"DEMO"}
+{ "eventId": "demo-payment-validation-1", "source": "DEMO" }
 ```
 
 Источник: `DEMO | GITHUB`. Одна транзакция переводит Квест в `DONE`, ставит progress 100, добавляет его в конец `DONE`, начисляет XP и наносит равный урон рейду. `ProgressionResponse.quest` использует полный контракт Квеста.
 
-Повтор безопасен: `applied=false`, `reason=ALREADY_COMPLETED`, XP/урон равны 0, а снимки Квеста, игрока и рейда остаются полными. Для Квеста 101 первый вызов даёт 1100 XP и 0 HP рейда.
+Повтор безопасен: `applied=false`, `reason=ALREADY_COMPLETED`, XP/урон равны 0. При наличии `ACTIVE` его снимок возвращается в `raid`; без активного Raid поле равно `null`, `raidDamage=0`, но Квест завершается и XP начисляется. При HP 0 Raid атомарно становится `COMPLETED`.
 
 ## Валидация и ошибки
 
@@ -116,16 +135,18 @@ HTTP API для Dashboard и пятиколоночной доски. Базов
 
 Форма ошибки: `{"code":"QUEST_NOT_FOUND","message":"Quest 999 was not found"}`.
 
-| HTTP | code | Причина |
-|---:|---|---|
-| 400 | `INVALID_REQUEST` | Невалидный JSON, поля или progress/status |
-| 404 | `QUEST_NOT_FOUND` | Нет Квеста или `beforeQuestId` не в целевой колонке |
-| 409 | `QUEST_CONFLICT` | Запрещённый переход, удаление или изменение завершённого Квеста |
-| 409 | `DEMO_STATE_NOT_READY` | Не подготовлен игрок или рейд |
-| 500 | `INTERNAL_ERROR` | Неожиданный сбой без внутренних деталей |
+| HTTP | code                   | Причина                                                         |
+| ---: | ---------------------- | --------------------------------------------------------------- |
+|  400 | `INVALID_REQUEST`      | Невалидный JSON, поля или progress/status                       |
+|  404 | `QUEST_NOT_FOUND`      | Нет Квеста или `beforeQuestId` не в целевой колонке             |
+|  409 | `QUEST_CONFLICT`       | Запрещённый переход, удаление или изменение завершённого Квеста |
+|  404 | `RAID_NOT_FOUND`       | Нет Raid                                                        |
+|  409 | `RAID_CONFLICT`        | Запрещённый lifecycle-переход или уже есть `ACTIVE`             |
+|  409 | `DEMO_STATE_NOT_READY` | Не подготовлен игрок или рейд                                   |
+|  500 | `INTERNAL_ERROR`       | Неожиданный сбой без внутренних деталей                         |
 
 ## Reset и realtime
 
-`POST /api/demo/reset` атомарно удаляет пользовательские изменения, восстанавливает игрока, десять Квестов, рейд и sequence Квестов на 1000.
+`POST /api/demo/reset` атомарно удаляет пользовательские изменения, восстанавливает игрока, десять Квестов, один `ACTIVE`, один `DRAFT` и sequence на 1000.
 
 STOMP подключается к `/ws`, topic — `/topic/progression`. Публикуется только применённый `ProgressionResponse`; повтор и reset событий не создают. REST остаётся обязательным источником полного состояния.

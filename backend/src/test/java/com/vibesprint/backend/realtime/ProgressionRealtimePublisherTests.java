@@ -57,7 +57,9 @@ class ProgressionRealtimePublisherTests {
                 applied,
                 null,
                 null,
-                null
+                null,
+                "DEMO",
+                false
         );
     }
 }

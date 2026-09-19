@@ -7,6 +7,7 @@ import com.vibesprint.backend.quest.QuestRepository;
 import com.vibesprint.backend.quest.QuestStatus;
 import com.vibesprint.backend.raid.Raid;
 import com.vibesprint.backend.raid.RaidRepository;
+import com.vibesprint.backend.raid.RaidStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -53,11 +54,13 @@ class MvpPersistenceTests {
         assertNull(activeQuest.getExternalReference());
         assertEquals(100, activeQuest.getSortOrder());
 
-        Raid raid = raidRepository.findFirstByOrderByIdAsc().orElseThrow();
+        Raid raid = raidRepository.findByStatus(RaidStatus.ACTIVE).orElseThrow();
         assertEquals(201L, raid.getId());
         assertEquals("Merge Conflict Hydra", raid.getName());
         assertEquals(1000, raid.getMaxHp());
         assertEquals(180, raid.getCurrentHp());
+        assertEquals("Defeat the merge conflicts blocking the team sprint.", raid.getDescription());
+        assertEquals(RaidStatus.ACTIVE, raid.getStatus());
     }
 
     @Test

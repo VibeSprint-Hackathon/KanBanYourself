@@ -10,14 +10,26 @@ import {
   resetDemoState,
   updateDemoQuest,
 } from '@/api/demo';
+import {
+  activateRaid as activateRaidRequest,
+  cancelRaid as cancelRaidRequest,
+  completeRaid as completeRaidRequest,
+  createRaid as createRaidRequest,
+  deleteRaid as deleteRaidRequest,
+  getRaids,
+  updateRaid as updateRaidRequest,
+} from '@/api/raids';
 import type {
   ApiError,
   CreateQuestRequest,
+  CreateRaidRequest,
   DemoState,
   MoveQuestRequest,
   ProgressionResult,
   Quest,
   QuestStatus,
+  Raid,
+  UpdateRaidRequest,
   UpdateQuestRequest,
 } from '@/api/demo.types';
 import { progressionRealtime, type RealtimeStatus } from '@/realtime/progression';
@@ -31,6 +43,10 @@ export const useDemoStore = defineStore('demo', () => {
   const creatingQuest = ref(false);
   const mutatingQuestId = ref<number | null>(null);
   const resetting = ref(false);
+  const raids = ref<Raid[]>([]);
+  const raidsLoading = ref(false);
+  const creatingRaid = ref(false);
+  const mutatingRaidId = ref<number | null>(null);
   const error = ref<string | null>(null);
   const lastProgression = ref<ProgressionResult | null>(null);
   const realtimeStatus = ref<RealtimeStatus>('disconnected');
@@ -83,6 +99,77 @@ export const useDemoStore = defineStore('demo', () => {
     } finally {
       completingQuestId.value = null;
     }
+  }
+
+  async function loadRaids(silent = false): Promise<boolean> {
+    if (!silent) raidsLoading.value = true;
+    error.value = null;
+    try {
+      raids.value = await getRaids();
+      return true;
+    } catch (cause) {
+      error.value = errorMessage(cause);
+      return false;
+    } finally {
+      if (!silent) raidsLoading.value = false;
+    }
+  }
+
+  async function createRaid(request: CreateRaidRequest): Promise<boolean> {
+    if (creatingRaid.value || mutatingRaidId.value !== null) return false;
+    creatingRaid.value = true;
+    error.value = null;
+    try {
+      await createRaidRequest(request);
+      return await refreshRaidsAndState();
+    } catch (cause) {
+      error.value = errorMessage(cause);
+      return false;
+    } finally {
+      creatingRaid.value = false;
+    }
+  }
+
+  async function updateRaid(raidId: number, request: UpdateRaidRequest): Promise<boolean> {
+    return mutateRaid(raidId, () => updateRaidRequest(raidId, request));
+  }
+
+  async function activateRaid(raidId: number): Promise<boolean> {
+    return mutateRaid(raidId, () => activateRaidRequest(raidId));
+  }
+
+  async function cancelRaid(raidId: number): Promise<boolean> {
+    return mutateRaid(raidId, () => cancelRaidRequest(raidId));
+  }
+
+  async function completeRaid(raidId: number): Promise<boolean> {
+    return mutateRaid(raidId, () => completeRaidRequest(raidId));
+  }
+
+  async function deleteRaid(raidId: number): Promise<boolean> {
+    return mutateRaid(raidId, () => deleteRaidRequest(raidId));
+  }
+
+  async function mutateRaid(raidId: number, request: () => Promise<unknown>): Promise<boolean> {
+    if (creatingRaid.value || mutatingRaidId.value !== null) return false;
+    mutatingRaidId.value = raidId;
+    error.value = null;
+    try {
+      await request();
+      return await refreshRaidsAndState();
+    } catch (cause) {
+      error.value = errorMessage(cause);
+      return false;
+    } finally {
+      mutatingRaidId.value = null;
+    }
+  }
+
+  async function refreshRaidsAndState(): Promise<boolean> {
+    const [nextRaids, nextState] = await Promise.all([getRaids(), getDemoState()]);
+    raids.value = nextRaids;
+    state.value = nextState;
+    return true;
   }
 
   async function createQuest(request: CreateQuestRequest): Promise<boolean> {
@@ -141,6 +228,7 @@ export const useDemoStore = defineStore('demo', () => {
 
     try {
       state.value = await resetDemoState();
+      raids.value = await getRaids();
       handledEventIds.clear();
       lastProgression.value = null;
       return true;
@@ -153,6 +241,11 @@ export const useDemoStore = defineStore('demo', () => {
   }
 
   function applyProgression(progression: ProgressionResult): void {
+    if (progression.raid !== null) {
+      raids.value = raids.value.map((raid) =>
+        raid.id === progression.raid?.id ? progression.raid : raid,
+      );
+    }
     if (state.value !== null) {
       const quests = state.value.quests.map((quest) =>
         quest.id === progression.quest.id ? progression.quest : quest,
@@ -164,7 +257,7 @@ export const useDemoStore = defineStore('demo', () => {
         ...state.value,
         player: progression.player,
         quests: sortQuests(quests),
-        raid: progression.raid,
+        raid: progression.raid?.status === 'ACTIVE' ? progression.raid : null,
       };
     }
 
@@ -217,16 +310,27 @@ export const useDemoStore = defineStore('demo', () => {
     creatingQuest,
     mutatingQuestId,
     resetting,
+    raids,
+    raidsLoading,
+    creatingRaid,
+    mutatingRaidId,
     error,
     lastProgression,
     realtimeStatus,
     hasState,
     loadState,
+    loadRaids,
     completeQuest,
     createQuest,
     updateQuest,
     deleteQuest,
     moveQuest,
+    createRaid,
+    updateRaid,
+    activateRaid,
+    cancelRaid,
+    completeRaid,
+    deleteRaid,
     resetDemo,
     startRealtime,
   };

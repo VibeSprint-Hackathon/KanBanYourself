@@ -43,8 +43,7 @@ public class DemoStateQueryService {
     public DemoStateResponse getState() {
         Player player = playerRepository.findById(DEMO_PLAYER_ID)
                 .orElseThrow(() -> new DemoStateNotReadyException("Player " + DEMO_PLAYER_ID + " is not ready"));
-        Raid raid = raidRepository.findFirstByOrderByIdAsc()
-                .orElseThrow(() -> new DemoStateNotReadyException("Raid is not ready"));
+        Raid raid = raidRepository.findByStatus(com.vibesprint.backend.raid.RaidStatus.ACTIVE).orElse(null);
         List<Quest> quests = questRepository.findAllInBoardOrder();
         boolean hasActiveQuest = quests.stream().anyMatch(quest -> quest.getStatus() == QuestStatus.IN_PROGRESS);
         ProgressionRules.PlayerProgress progress = progressionRules.describe(player.getTotalXp());

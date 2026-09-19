@@ -11,11 +11,11 @@ defineProps<{ raid: Raid; presentation: { playerDamage: number; xpReward: number
     flat
     bordered
     class="dashboard-card raid-card"
-    :class="{ defeated: raid.status === 'DEFEATED' }"
+    :class="{ defeated: raid.status === 'COMPLETED' }"
   >
     <div class="raid-header spread">
       <div>
-        <div class="eyebrow" :class="raid.status === 'DEFEATED' ? 'green' : 'red'">
+        <div class="eyebrow" :class="raid.status === 'COMPLETED' ? 'green' : 'red'">
           Raid boss · {{ raid.status }}
         </div>
         <h2>{{ raid.name }}</h2>
@@ -23,7 +23,7 @@ defineProps<{ raid: Raid; presentation: { playerDamage: number; xpReward: number
       <q-icon :name="mdiSwordCross" size="28px" class="red" />
     </div>
     <div class="boss-stage">
-      <BossVisual :name="raid.name" :defeated="raid.status === 'DEFEATED'" />
+      <BossVisual :name="raid.name" :defeated="raid.status === 'COMPLETED'" />
     </div>
     <div class="raid-stats">
       <div class="spread">

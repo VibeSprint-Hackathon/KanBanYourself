@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/changes/002-mvp-domain.yaml
   - include:
       file: db/changelog/changes/003-quest-kanban.yaml
+  - include:
+      file: db/changelog/changes/004-raid-lifecycle.yaml
