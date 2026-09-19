@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-github-webhook-delivery
+      author: vibesprint
+      changes:
+        - createTable:
+            tableName: github_webhook_delivery
+            columns:
+              - column:
+                  name: delivery_id
+                  type: varchar(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: processed_at
+                  type: timestamptz
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false

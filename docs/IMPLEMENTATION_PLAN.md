@@ -23,11 +23,12 @@
 | I1Q Quests + backend | `DONE` | Доска использует общий `DemoState` и complete API |
 | I1R Raids + backend | `DONE` | Активный рейд и последний урон приходят с backend |
 | I1P Профили и исполнители | `DONE` | 3 игрока, mock switch, assignee CRUD и персональный Dashboard |
+| G1 GitHub webhook | `DONE` | Импорт и обновление карточек, PostgreSQL-дедупликация, progression и realtime |
 | I1W Запись и история | `OPTIONAL` | CRUD Квестов и история рейдов после MVP |
 | I2 Полный прогон | `NEXT` | Три повторяемых цикла и проверка ошибок |
 | P1/P2 Полировка | `PLANNED` | Только после стабильного I2 |
 
-Backend подтверждён полным набором из 70 тестов на Java 21 и PostgreSQL 17. Frontend проходит typecheck и production build.
+Backend подтверждён полным набором из 79 тестов на Java 21 и PostgreSQL 17. Frontend проходит typecheck и production build.
 
 ## Выполненная основа
 
@@ -55,6 +56,7 @@ Backend подтверждён полным набором из 70 тестов 
 
 - `POST /api/demo/reset` возвращает исходное состояние.
 - Backend публикует применённый `ProgressionResponse` в `/topic/progression`.
+- GitHub Issues создают/обновляют карточки; `closed` проходит через progression service. Delivery дедуплицируется в PostgreSQL. Для локального демо секрет не нужен; правила — в [INTEGRATIONS.md](INTEGRATIONS.md).
 - Vue устанавливает одну STOMP-сессию при старте и предоставляет `progressionRealtime.subscribe(...)`.
 - Dashboard применяет realtime-события к общему состоянию и не повторяет визуальную реакцию одного `eventId`.
 
@@ -135,7 +137,7 @@ Backend DTO, схема и формулы в I1 не меняются. Если 
 
 ## Полировка и дополнительные возможности
 
-После I2 улучшить один демонстрационный момент и зафиксировать холодный запуск по [DEMO.md](DEMO.md). GitHub webhook, n8n, отдельные страницы и дополнительные игровые системы не начинать до готового I2.
+После I2 улучшить один демонстрационный момент и зафиксировать холодный запуск по [DEMO.md](DEMO.md). Расширение GitHub за пределы Issues, n8n и дополнительные игровые системы не начинать до готового I2.
 
 ## Ближайшая передача
 

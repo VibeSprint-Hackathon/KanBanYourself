@@ -26,7 +26,8 @@ public class DemoResetService {
 
     @Transactional
     public DemoStateResponse reset() {
-        jdbcTemplate.execute("lock table quest, player, raid, player_achievement in access exclusive mode");
+        jdbcTemplate.execute("lock table quest, player, raid, player_achievement, github_webhook_delivery in access exclusive mode");
+        jdbcTemplate.update("delete from github_webhook_delivery");
         jdbcTemplate.update("delete from player_achievement");
         jdbcTemplate.update("delete from quest");
         jdbcTemplate.update("delete from raid");
@@ -85,8 +86,10 @@ public class DemoResetService {
                 "TODO", null, 320, 1L, null, 200);
         insertQuest(107L, "Add profile rewards", "Surface earned badges on the player profile.",
                 "TESTING", 35, 420, 3L, null, 100);
-        insertQuest(108L, "Validate GitHub webhook", "Check event signatures and safe handling of retries.",
-                "TESTING", 90, 350, 2L, "#148 Webhook validation", 200);
+        insertQuest(108L, "Improve database query performance",
+                "Investigate slow dashboard and project queries, then add appropriate indexes.",
+                "TESTING", 90, 350, 2L,
+                "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/10", 200);
         insertQuest(109L, "Test level-up animation", "Review the reward moment and reduced motion state.",
                 "TESTING", 85, 280, 1L, null, 300);
         insertQuest(110L, "Connect GitHub", "Link commits and pull requests to Quest progress.",

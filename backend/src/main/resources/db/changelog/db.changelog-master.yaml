@@ -13,3 +13,7 @@ databaseChangeLog:
       file: db/changelog/changes/005-github-sync-dedupe.yaml
   - include:
       file: db/changelog/changes/006-achievements.yaml
+  - include:
+      file: db/changelog/changes/007-github-webhook-delivery.yaml
+  - include:
+      file: db/changelog/changes/008-link-demo-github-issue.yaml

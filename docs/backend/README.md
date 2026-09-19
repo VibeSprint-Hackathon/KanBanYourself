@@ -55,6 +55,7 @@
 - `GET /api/players` для read-only списка профилей;
 - `POST/PUT/DELETE /api/demo/quests` и `PATCH .../move` для Kanban-операций;
 - `POST /api/demo/quests/{questId}/complete` для завершения Квеста;
+- GitHub webhook и импорт Issues: создание, обновление и закрытие карточек по [правилам интеграции](../INTEGRATIONS.md); секрет для локального демо не требуется;
 - `/api/raids` для списка, CRUD и явных lifecycle-команд;
 - `GET /api/players/{playerId}/achievements` для реального состояния 10 достижений;
 - `ProgressionResponse` с обновлёнными Квестом, игроком, рейдом, наградой и новыми открытиями.

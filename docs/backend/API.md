@@ -26,6 +26,9 @@ HTTP API для Dashboard, доски и управления Raid. Базовы
 | `POST /api/raids/{id}/cancel`         |   200 | Отмена draft/active                |
 | `POST /api/raids/{id}/complete`       |   200 | Административное завершение без XP |
 | `DELETE /api/raids/{id}`              |   204 | Удаление только draft              |
+| `GET /api/integrations/github/issues` |   200 | Диагностический список open Issues |
+| `POST /api/integrations/github/issues/webhook` | 200 | Создание, обновление и закрытие GitHub-Квеста |
+| `POST /api/integrations/github/issues/sync` | 200 | Импорт всех Issues; ответ `{ "synced": N }` |
 
 Все четыре обычные мутации Квеста возвращают полный актуальный `DemoStateResponse`.
 
@@ -157,6 +160,17 @@ Activation не заменяет текущий Raid молча и возвра�
 `POST /api/demo/reset` атомарно удаляет пользовательские изменения и прогресс достижений, восстанавливает трёх игроков, распределённые Квесты, один `ACTIVE`, один `DRAFT` и sequence на 1000.
 
 STOMP подключается к `/ws`, topic — `/topic/progression`. Публикуется только применённый `ProgressionResponse`; повтор и reset событий не создают. Поле `unlockedAchievements` содержит только достижения, впервые открытые этим событием. REST остаётся обязательным источником полного состояния.
+
+## GitHub webhook
+
+Webhook подтверждает служебный `ping` ответом `200`. Поддерживаемые actions и правила синхронизации: [INTEGRATIONS.md](../INTEGRATIONS.md). Обязательные заголовки для Issue:
+
+- `X-GitHub-Event: issues`;
+- уникальный `X-GitHub-Delivery`.
+
+Квест связывается с Issue через canonical `externalReference` вида `https://github.com/{owner}/{repository}/issues/{number}`. Разрешённый репозиторий задаёт `GITHUB_REPOSITORY`. Успешное событие проходит через общий progression service и публикуется в `/topic/progression`.
+
+Delivery сохраняется в PostgreSQL в одной транзакции с изменением Квеста. Повтор возвращает `duplicate=true` без нового XP и урона. Неподдерживаемое событие или чужой репозиторий возвращает `400 INVALID_REQUEST`. Новый Issue создаёт карточку. Изменение без награды возвращает `reason=GITHUB_SYNC`, `applied=false` и публикует уведомление `/topic/quests`. Проверка подписи намеренно не входит в локальное демо.
 
 ## Достижения
 

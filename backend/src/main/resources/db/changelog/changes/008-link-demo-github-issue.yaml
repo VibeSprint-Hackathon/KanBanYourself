@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-link-demo-github-issue
+      author: codex
+      changes:
+        - update:
+            tableName: quest
+            columns:
+              - column:
+                  name: title
+                  value: Improve database query performance
+              - column:
+                  name: description
+                  value: Investigate slow dashboard and project queries, then add appropriate indexes.
+              - column:
+                  name: external_reference
+                  value: https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/10
+            where: id = 108

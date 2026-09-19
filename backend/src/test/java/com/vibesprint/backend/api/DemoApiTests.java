@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -21,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "app.github.enabled=false")
+@SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
 class DemoApiTests {
@@ -201,10 +202,10 @@ class DemoApiTests {
                   "issue": {
                     "number": 42,
                     "state": "closed",
-                    "repository": {
-                      "full_name": "VibeSprint-Hackathon/KanBanYourself"
-                    },
                     "html_url": "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
+                  },
+                  "repository": {
+                    "full_name": "VibeSprint-Hackathon/KanBanYourself"
                   }
                 }
                 """;
@@ -227,7 +228,22 @@ class DemoApiTests {
     }
 
     @Test
-    void syncsGithubIssueWhenLabelChanges() throws Exception {
+    void acknowledgesGithubPingWithoutChangingDemoState() throws Exception {
+        mockMvc.perform(post("/api/integrations/github/issues/webhook")
+                        .header("X-GitHub-Event", "ping")
+                        .header("X-GitHub-Delivery", "github-ping")
+                        .contentType("application/json")
+                        .content("{\"zen\":\"Keep it logically awesome.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+
+        mockMvc.perform(get("/api/demo/state"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.players[0].totalXp").value(920));
+    }
+
+    @Test
+    void syncsGithubLabelsWithoutAwardingXp() throws Exception {
         jdbcTemplate.update(
                 "update quest set external_reference = ? where id = 101",
                 "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
@@ -257,14 +273,32 @@ class DemoApiTests {
                         .contentType("application/json")
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.applied").value(true))
-                .andExpect(jsonPath("$.source").value("GITHUB"))
-                .andExpect(jsonPath("$.quest.status").value("IN_PROGRESS"))
-                .andExpect(jsonPath("$.player.id").value(1));
+                .andExpect(jsonPath("$.reason").value("GITHUB_SYNC"));
 
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.quests[?(@.id == 101)].status").value("IN_PROGRESS"));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"todo,TODO", "in-progress,IN_PROGRESS", "done,DONE", "testing,TESTING", "backlog,BACKLOG"})
+    void importsNewGithubIssueAndDeduplicatesDelivery(String label, String expectedStatus) throws Exception {
+        String body = """
+                {"action":"opened","repository":{"full_name":"VibeSprint-Hackathon/KanBanYourself"},
+                 "issue":{"number":9001,"title":"Imported issue","body":"Description","state":"open",
+                  "labels":[{"name":"%s"}],"assignee":{"login":"Beresnjev"}}}
+                """.formatted(label);
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mockMvc.perform(post("/api/integrations/github/issues/webhook")
+                            .header("X-GitHub-Event", "issues").header("X-GitHub-Delivery", "new-issue-test")
+                            .contentType("application/json").content(body))
+                    .andExpect(status().isOk());
+        }
+        mockMvc.perform(get("/api/demo/state"))
+                .andExpect(jsonPath("$.quests[?(@.title == 'Imported issue')]", hasSize(1)))
+                .andExpect(jsonPath("$.quests[?(@.title == 'Imported issue')].assigneeId").value(2))
+                .andExpect(jsonPath("$.quests[?(@.title == 'Imported issue')].status").value(expectedStatus))
+                .andExpect(jsonPath("$.players[0].totalXp").value(920));
     }
 
     @Test
@@ -280,10 +314,10 @@ class DemoApiTests {
                   "issue": {
                     "number": 42,
                     "state": "closed",
-                    "repository": {
-                      "full_name": "VibeSprint-Hackathon/KanBanYourself"
-                    },
                     "html_url": "https://github.com/VibeSprint-Hackathon/KanBanYourself/issues/42"
+                  },
+                  "repository": {
+                    "full_name": "VibeSprint-Hackathon/KanBanYourself"
                   }
                 }
                 """;

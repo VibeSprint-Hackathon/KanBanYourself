@@ -35,4 +35,12 @@ public class ProgressionRealtimePublisher {
             LOGGER.debug("Progression realtime delivery failure", exception);
         }
     }
+
+    public void publishBoardChanged() {
+        try {
+            messagingTemplate.convertAndSend("/topic/quests", (Object) java.util.Map.of("type", "GITHUB_SYNC"));
+        } catch (RuntimeException exception) {
+            LOGGER.warn("Quest refresh notification failed: {}", exception.getMessage());
+        }
+    }
 }

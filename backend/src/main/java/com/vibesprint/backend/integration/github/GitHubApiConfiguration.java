@@ -2,6 +2,7 @@ package com.vibesprint.backend.integration.github;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
@@ -9,6 +10,9 @@ public class GitHubApiConfiguration {
 
     @Bean
     public RestTemplate githubRestTemplate() {
-        return new RestTemplate();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(3_000);
+        requestFactory.setReadTimeout(5_000);
+        return new RestTemplate(requestFactory);
     }
 }

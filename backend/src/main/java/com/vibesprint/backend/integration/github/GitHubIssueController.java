@@ -13,9 +13,16 @@ import java.util.List;
 public class GitHubIssueController {
 
     private final GitHubIssueService githubIssueService;
+    private final GitHubIssueSyncService syncService;
 
-    public GitHubIssueController(GitHubIssueService githubIssueService) {
+    public GitHubIssueController(GitHubIssueService githubIssueService, GitHubIssueSyncService syncService) {
         this.githubIssueService = githubIssueService;
+        this.syncService = syncService;
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/github/issues/sync")
+    public java.util.Map<String, Integer> syncIssues() {
+        return java.util.Map.of("synced", syncService.syncNow());
     }
 
     @GetMapping("/github/issues")

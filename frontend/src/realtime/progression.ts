@@ -11,6 +11,7 @@ class ProgressionRealtimeClient {
   private readonly client: Client;
   private readonly progressionHandlers = new Set<ProgressionHandler>();
   private readonly statusHandlers = new Set<RealtimeStatusHandler>();
+  private readonly boardHandlers = new Set<() => void>();
   private status: RealtimeStatus = 'disconnected';
 
   constructor() {
@@ -26,6 +27,7 @@ class ProgressionRealtimeClient {
     this.client.onConnect = () => {
       this.setStatus('connected');
       this.client.subscribe(PROGRESSION_TOPIC, (message) => this.handleMessage(message));
+      this.client.subscribe('/topic/quests', () => this.boardHandlers.forEach((handler) => handler()));
     };
     this.client.onWebSocketClose = () => this.setStatus('disconnected');
     this.client.onWebSocketError = () => this.setStatus('disconnected');
@@ -56,6 +58,11 @@ class ProgressionRealtimeClient {
     this.statusHandlers.add(handler);
     handler(this.status);
     return () => this.statusHandlers.delete(handler);
+  }
+
+  subscribeBoard(handler: () => void): () => void {
+    this.boardHandlers.add(handler);
+    return () => this.boardHandlers.delete(handler);
   }
 
   private handleMessage(message: IMessage): void {

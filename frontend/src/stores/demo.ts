@@ -288,6 +288,9 @@ export const useDemoStore = defineStore('demo', () => {
       let previousStatus: RealtimeStatus | null = null;
       let hasConnected = false;
       stopProgression = progressionRealtime.subscribe(applyProgression);
+      const stopBoard = progressionRealtime.subscribeBoard(() => { void loadState(true); });
+      const stopEvents = stopProgression;
+      stopProgression = () => { stopEvents(); stopBoard(); };
       stopStatus = progressionRealtime.subscribeStatus((status) => {
         const reconnected =
           hasConnected && previousStatus === 'disconnected' && status === 'connected';
