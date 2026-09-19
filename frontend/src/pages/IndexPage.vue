@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { mdiGithub, mdiPulse } from '@quasar/extras/mdi-v7';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
 import { useDashboardDemo } from '@/composables/useDashboardDemo';
@@ -8,13 +8,29 @@ import RaidBossCard from '@/components/dashboard/RaidBossCard.vue';
 import ActiveQuestCard from '@/components/dashboard/ActiveQuestCard.vue';
 import QuestDetailsDrawer from '@/components/dashboard/QuestDetailsDrawer.vue';
 const questOpen = ref(false);
-const { state, view, quest: activeQuest, reaction, toast, completeQuest } = useDashboardDemo();
-const questView = activeQuest.value ? view.quests[activeQuest.value.id] : undefined;
+const {
+  state,
+  view,
+  quest: activeQuest,
+  reaction,
+  toast,
+  loading,
+  completingQuestId,
+  resetting,
+  error,
+  realtimeStatus,
+  loadState,
+  completeQuest,
+  resetDemo,
+} = useDashboardDemo();
+const questView = computed(() =>
+  activeQuest.value ? view.quests[activeQuest.value.id] : undefined,
+);
 
 async function handleCompleteQuest() {
   questOpen.value = false;
   await nextTick();
-  completeQuest();
+  await completeQuest();
 }
 </script>
 
@@ -26,57 +42,89 @@ async function handleCompleteQuest() {
         <h2>Your adventure</h2>
       </div>
       <div class="header-meta">
+        <q-btn
+          flat
+          no-caps
+          icon="restart_alt"
+          label="Reset demo"
+          class="reset-button"
+          :loading="resetting"
+          :disable="loading || resetting || completingQuestId !== null"
+          @click="resetDemo"
+        />
         <span class="github-sync muted"
-          ><q-icon name="sensors" size="17px" class="green" />{{ view.github.syncLabel }}</span
+          ><q-icon
+            name="sensors"
+            size="17px"
+            :class="realtimeStatus === 'connected' ? 'green' : 'orange'"
+          />{{ realtimeStatus === 'connected' ? 'Live sync' : 'Sync offline' }}</span
         ><span class="header-time"
           ><span class="muted">{{ view.dateLabel }}</span
           >{{ view.timeLabel }}</span
         >
       </div>
     </header>
-    <div class="dashboard-top">
-      <PlayerCard
-        :player="state.player"
-        :next-unlock="state.nextUnlock"
-        :presentation="view.player"
-        :reaction="reaction"
-      /><RaidBossCard :raid="state.raid" :presentation="view.raid" />
-    </div>
-    <div class="dashboard-bottom">
-      <ActiveQuestCard
+    <q-card v-if="loading && !state" flat bordered class="dashboard-card state-card">
+      <q-spinner color="primary" size="34px" />
+      <strong>Loading adventure…</strong>
+    </q-card>
+    <q-card v-else-if="!state" flat bordered class="dashboard-card state-card error-card">
+      <q-icon name="cloud_off" size="34px" class="red" />
+      <strong>Could not load the adventure</strong>
+      <span class="muted">{{ error }}</span>
+      <q-btn unelevated no-caps label="Try again" color="primary" @click="loadState()" />
+    </q-card>
+    <template v-else>
+      <div v-if="error" class="sync-warning" role="alert">
+        <q-icon name="warning" size="19px" />
+        <span>{{ error }}</span>
+        <q-btn flat dense no-caps label="Retry" @click="loadState()" />
+      </div>
+      <div class="dashboard-top">
+        <PlayerCard
+          :player="state.player"
+          :next-unlock="state.nextUnlock"
+          :presentation="view.player"
+          :reaction="reaction"
+        /><RaidBossCard :raid="state.raid" :presentation="view.raid" />
+      </div>
+      <div class="dashboard-bottom">
+        <ActiveQuestCard
+          v-if="activeQuest && questView"
+          :quest="activeQuest"
+          :presentation="questView"
+          @open="questOpen = true"
+        />
+        <q-card flat bordered class="dashboard-card small-card"
+          ><div class="spread small-card-top">
+            <q-icon :name="mdiGithub" size="24px" /><span class="status-dot green-dot" />
+          </div>
+          <div class="eyebrow muted">GitHub</div>
+          <h3>{{ view.github.status }}</h3>
+          <p class="muted">{{ view.github.commitsToday }} commits today</p></q-card
+        >
+        <q-card flat bordered class="dashboard-card small-card"
+          ><div class="spread small-card-top">
+            <q-icon :name="mdiPulse" size="24px" class="blue" /><span class="muted">{{
+              view.activity.timeLabel
+            }}</span>
+          </div>
+          <div class="eyebrow muted">Recent activity</div>
+          <h3>{{ view.activity.title }}</h3>
+          <p v-if="view.activity.xpGained" class="activity-xp orange">
+            +{{ formatNumber(view.activity.xpGained) }} XP
+          </p></q-card
+        >
+      </div>
+      <QuestDetailsDrawer
         v-if="activeQuest && questView"
+        v-model="questOpen"
         :quest="activeQuest"
         :presentation="questView"
-        @open="questOpen = true"
+        :completing="completingQuestId === activeQuest.id"
+        @complete="handleCompleteQuest"
       />
-      <q-card flat bordered class="dashboard-card small-card"
-        ><div class="spread small-card-top">
-          <q-icon :name="mdiGithub" size="24px" /><span class="status-dot green-dot" />
-        </div>
-        <div class="eyebrow muted">GitHub</div>
-        <h3>{{ view.github.status }}</h3>
-        <p class="muted">{{ view.github.commitsToday }} commits today</p></q-card
-      >
-      <q-card flat bordered class="dashboard-card small-card"
-        ><div class="spread small-card-top">
-          <q-icon :name="mdiPulse" size="24px" class="blue" /><span class="muted">{{
-            view.activity.timeLabel
-          }}</span>
-        </div>
-        <div class="eyebrow muted">Recent activity</div>
-        <h3>{{ view.activity.title }}</h3>
-        <p v-if="view.activity.xpGained" class="activity-xp orange">
-          +{{ formatNumber(view.activity.xpGained) }} XP
-        </p></q-card
-      >
-    </div>
-    <QuestDetailsDrawer
-      v-if="activeQuest && questView"
-      v-model="questOpen"
-      :quest="activeQuest"
-      :presentation="questView"
-      @complete="handleCompleteQuest"
-    />
+    </template>
     <div v-if="toast" class="completion-toast" role="status" aria-live="polite">
       <q-icon name="check_circle" size="23px" class="green" />
       <strong>{{ toast }}</strong>
@@ -108,6 +156,37 @@ async function handleCompleteQuest() {
   align-items: center;
   font-size: 13px;
   gap: 27px;
+}
+.reset-button {
+  color: var(--muted);
+}
+.state-card {
+  min-height: 360px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.state-card .q-btn {
+  margin-top: 6px;
+}
+.error-card {
+  border-color: #ffaaa3;
+}
+.sync-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  color: #75442d;
+  border: 1px solid #efca8c;
+  border-radius: 6px;
+  background: #fff0d4;
+}
+.sync-warning span {
+  flex: 1;
 }
 .github-sync {
   display: flex;

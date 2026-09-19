@@ -50,6 +50,11 @@ export interface CosmeticUnlock {
   displayName: string;
 }
 
+export interface ApiError {
+  code: string;
+  message: string;
+}
+
 export interface ProgressionResult {
   eventId: string;
   applied: boolean;

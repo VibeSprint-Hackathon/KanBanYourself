@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
 import {
   mdiBookOpenPageVariantOutline,
   mdiCogOutline,
@@ -6,7 +8,22 @@ import {
   mdiTrophyOutline,
   mdiViewDashboardOutline,
 } from '@quasar/extras/mdi-v7';
-import { demoState, dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
+import { dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
+import { useDemoStore } from '@/stores/demo';
+
+const demoStore = useDemoStore();
+const { state } = storeToRefs(demoStore);
+const playerName = computed(() => state.value?.player.name ?? 'Player');
+const playerInitials = computed(() => {
+  const initials = playerName.value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return initials || view.player.initials;
+});
 const navigation = [
   { label: 'Dashboard', icon: mdiViewDashboardOutline, active: true },
   { label: 'Quests', icon: mdiBookOpenPageVariantOutline, active: false },
@@ -48,9 +65,9 @@ const navigation = [
           >
         </nav>
         <div class="sidebar-player">
-          <q-avatar rounded size="40px">{{ view.player.initials }}</q-avatar>
+          <q-avatar rounded size="40px">{{ playerInitials }}</q-avatar>
           <div>
-            <strong>{{ demoState.player.name }}</strong
+            <strong>{{ playerName }}</strong
             ><span>{{ view.player.sidebarStatus }}</span>
           </div>
           <q-icon :name="mdiCogOutline" size="19px" class="muted" />

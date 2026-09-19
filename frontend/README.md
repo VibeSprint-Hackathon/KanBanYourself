@@ -26,4 +26,4 @@ npm run build
 
 ## Текущая граница
 
-Dashboard реализован, но пока получает доменное состояние из fixture. Следующая задача — добавить типизированные GET/POST-функции и подключить `useDashboardDemo` к backend. Не переносить расчёты XP, уровней, наград или урона во frontend.
+Dashboard использует типизированные GET/POST-функции, общий Pinia store и realtime. Fixture содержит только presentation-данные. Следующая задача — показать Квесты из общего state в колонках `TODO`, `IN_PROGRESS`, `DONE`. Не переносить расчёты XP, уровней, наград или урона во frontend.

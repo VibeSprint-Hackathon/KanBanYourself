@@ -6,7 +6,7 @@ import {
   type QuestPresentation,
 } from '@/fixtures/dashboard.fixture';
 const open = defineModel<boolean>({ required: true });
-defineProps<{ quest: Quest; presentation: QuestPresentation }>();
+defineProps<{ quest: Quest; presentation: QuestPresentation; completing: boolean }>();
 defineEmits<{ complete: [] }>();
 </script>
 
@@ -73,8 +73,10 @@ defineEmits<{ complete: [] }>();
           unelevated
           no-caps
           class="complete-button"
-          label="Complete Quest"
+          :label="quest.status === 'DONE' ? 'Quest completed' : 'Complete Quest'"
           aria-label="Complete Quest"
+          :loading="completing"
+          :disable="completing || quest.status === 'DONE'"
           @click="$emit('complete')"
         />
         <q-btn flat no-caps class="drawer-close" label="Close" @click="open = false" />
@@ -172,7 +174,9 @@ section .linked-label {
 .complete-button {
   color: white;
   background: var(--blue);
-  cursor: default;
+}
+.complete-button:not(.disabled) {
+  cursor: pointer;
 }
 .drawer-close {
   color: var(--muted);
