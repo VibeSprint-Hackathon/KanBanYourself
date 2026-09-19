@@ -17,13 +17,15 @@ import celebrating1 from '@/assets/celebrating-1.png';
 import celebrating2 from '@/assets/celebrating-2.png';
 import celebrating3 from '@/assets/celebrating-3.png';
 import celebrating4 from '@/assets/celebrating-4.png';
-import hoodieSrc from '@/assets/hoody.png';
+import starterHoodieSrc from '@/assets/hoody-0.png';
+import blueHoodieSrc from '@/assets/hoody.png';
 
 const props = defineProps<{
   name: string;
   persistentState: CharacterState;
   reaction: CharacterReaction | null;
-  hoodieEnabled: boolean;
+  cosmeticKey: string;
+  level: number;
 }>();
 
 const FRAME_DURATION: Record<CharacterState | 'celebrating', number> = {
@@ -43,6 +45,15 @@ const persistentFrames: Record<CharacterState, string[]> = {
 const frameIndex = ref(0);
 const celebrationStep = ref(0);
 const isCelebrating = computed(() => props.reaction !== null);
+const hoodieSrc = computed<string | null>(() => {
+  if (props.cosmeticKey === 'base' || props.persistentState !== 'idle' || isCelebrating.value) {
+    return null;
+  }
+  if (props.level === 5) {
+    return starterHoodieSrc;
+  }
+  return props.level >= 6 ? blueHoodieSrc : null;
+});
 const activeFrames = computed(() =>
   isCelebrating.value ? celebratingFrames : persistentFrames[props.persistentState],
 );
@@ -87,10 +98,12 @@ watch(() => [props.persistentState, props.reaction] as const, restartAnimation, 
 });
 
 onMounted(() => {
-  [...idleFrames, ...codingFrames, ...celebratingFrames, hoodieSrc].forEach((src) => {
-    const image = new Image();
-    image.src = src;
-  });
+  [...idleFrames, ...codingFrames, ...celebratingFrames, starterHoodieSrc, blueHoodieSrc].forEach(
+    (src) => {
+      const image = new Image();
+      image.src = src;
+    },
+  );
 });
 
 onUnmounted(stopAnimation);
@@ -109,13 +122,7 @@ onUnmounted(stopAnimation);
   >
     <div class="character-stack">
       <img class="character-frame" :src="currentFrame" alt="" draggable="false" />
-      <img
-        v-if="hoodieEnabled"
-        class="character-cosmetic"
-        :src="hoodieSrc"
-        alt=""
-        draggable="false"
-      />
+      <img v-if="hoodieSrc" class="character-cosmetic" :src="hoodieSrc" alt="" draggable="false" />
     </div>
   </div>
 </template>
