@@ -29,7 +29,7 @@ const playerInitials = computed(() => {
 const navigation = [
   { label: 'Dashboard', icon: mdiViewDashboardOutline, to: '/' },
   { label: 'Quests', icon: mdiBookOpenPageVariantOutline, to: '/quests' },
-  { label: 'Raids', icon: mdiSwordCross, to: undefined },
+  { label: 'Raids', icon: mdiSwordCross, to: '/raids' },
   { label: 'Achievements', icon: mdiTrophyOutline, to: undefined },
 ];
 </script>

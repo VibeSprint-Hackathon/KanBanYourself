@@ -13,6 +13,10 @@ const routes: RouteRecordRaw[] = [
         path: 'quests',
         component: () => import('@/pages/QuestsPage.vue'),
       },
+      {
+        path: 'raids',
+        component: () => import('@/pages/RaidsPage.vue'),
+      },
     ],
   },
 

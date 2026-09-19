@@ -2,6 +2,7 @@
 import { mdiSwordCross } from '@quasar/extras/mdi-v7';
 import type { Raid } from '@/api/demo.types';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
+import BossVisual from '@/components/raids/BossVisual.vue';
 defineProps<{ raid: Raid; presentation: { playerDamage: number; xpReward: number } }>();
 </script>
 
@@ -22,9 +23,7 @@ defineProps<{ raid: Raid; presentation: { playerDamage: number; xpReward: number
       <q-icon :name="mdiSwordCross" size="28px" class="red" />
     </div>
     <div class="boss-stage">
-      <div class="boss-placeholder" role="img" :aria-label="`${raid.name} placeholder`">
-        <i /><i />
-      </div>
+      <BossVisual :name="raid.name" :defeated="raid.status === 'DEFEATED'" />
     </div>
     <div class="raid-stats">
       <div class="spread">
@@ -58,10 +57,6 @@ defineProps<{ raid: Raid; presentation: { playerDamage: number; xpReward: number
 .raid-card.defeated {
   border-color: #8dceb2;
 }
-.raid-card.defeated .boss-placeholder {
-  filter: grayscale(0.6);
-  opacity: 0.72;
-}
 .raid-header {
   padding: 23px 27px;
   border-bottom: 1px solid var(--border);
@@ -78,46 +73,6 @@ h2 {
   flex: 1;
   min-height: 220px;
   padding-bottom: 10px;
-}
-.boss-placeholder {
-  position: relative;
-  width: 208px;
-  height: 153px;
-  border-radius: 45% 45% 35% 35%;
-  background: linear-gradient(#b65848, #7f3933);
-  box-shadow: 0 24px 24px #813f3b30;
-}
-.boss-placeholder::before,
-.boss-placeholder::after {
-  content: '';
-  position: absolute;
-  top: -29px;
-  width: 60px;
-  height: 85px;
-  background: #894a3b;
-}
-.boss-placeholder::before {
-  left: 10px;
-  border-radius: 80% 15% 65% 45%;
-  transform: rotate(-23deg);
-}
-.boss-placeholder::after {
-  right: 10px;
-  border-radius: 15% 80% 45% 65%;
-  transform: rotate(23deg);
-}
-.boss-placeholder i {
-  position: absolute;
-  width: 13px;
-  height: 8px;
-  background: #eb6554;
-  border-radius: 10px;
-  top: 57px;
-  left: 66px;
-}
-.boss-placeholder i + i {
-  left: auto;
-  right: 66px;
 }
 .raid-stats {
   padding: 0 27px 28px;
