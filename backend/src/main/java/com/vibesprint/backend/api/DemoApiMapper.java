@@ -38,10 +38,13 @@ public class DemoApiMapper {
         return new DemoStateResponse.QuestView(
                 quest.getId(),
                 quest.getTitle(),
+                quest.getDescription(),
                 quest.getStatus().name(),
+                quest.getProgress(),
                 quest.getXpReward(),
                 quest.getAssignee().getId(),
-                quest.getExternalReference()
+                quest.getExternalReference(),
+                quest.getSortOrder()
         );
     }
 
@@ -84,10 +87,13 @@ public class DemoApiMapper {
         return new DemoStateResponse.QuestView(
                 quest.id(),
                 quest.title(),
+                quest.description(),
                 quest.status().name(),
+                quest.progress(),
                 quest.xpReward(),
                 quest.assigneeId(),
-                quest.externalReference()
+                quest.externalReference(),
+                quest.sortOrder()
         );
     }
 

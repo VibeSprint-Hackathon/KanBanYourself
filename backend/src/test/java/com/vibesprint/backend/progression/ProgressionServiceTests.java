@@ -49,6 +49,9 @@ class ProgressionServiceTests {
         assertTrue(result.bossDefeated());
 
         assertEquals(QuestStatus.DONE, result.quest().status());
+        assertEquals("Fix server-side validation and cover the payment edge cases.", result.quest().description());
+        assertEquals(100, result.quest().progress());
+        assertEquals(300, result.quest().sortOrder());
         assertEquals(1100, result.player().totalXp());
         assertEquals(5, result.player().level());
         assertEquals(1500, result.player().nextLevelXp());
@@ -78,6 +81,8 @@ class ProgressionServiceTests {
         assertNull(repeated.reaction());
         assertTrue(repeated.bossDefeated());
         assertEquals(QuestStatus.DONE, repeated.quest().status());
+        assertEquals(100, repeated.quest().progress());
+        assertEquals(300, repeated.quest().sortOrder());
         assertEquals(1100, repeated.player().totalXp());
         assertEquals(0, repeated.raid().currentHp());
     }

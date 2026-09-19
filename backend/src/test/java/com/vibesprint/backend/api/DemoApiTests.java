@@ -10,8 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,10 +39,21 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.player.totalXp").value(920))
                 .andExpect(jsonPath("$.player.level").value(4))
                 .andExpect(jsonPath("$.player.characterState").value("coding"))
-                .andExpect(jsonPath("$.quests", hasSize(3)))
-                .andExpect(jsonPath("$.quests[0].id").value(101))
-                .andExpect(jsonPath("$.quests[0].status").value("IN_PROGRESS"))
-                .andExpect(jsonPath("$.quests[0].externalReference").value(nullValue()))
+                .andExpect(jsonPath("$.quests", hasSize(10)))
+                .andExpect(jsonPath("$.quests[0].id").value(104))
+                .andExpect(jsonPath("$.quests[1].id").value(105))
+                .andExpect(jsonPath("$.quests[2].id").value(102))
+                .andExpect(jsonPath("$.quests[4].id").value(101))
+                .andExpect(jsonPath("$.quests[4].description")
+                        .value("Fix server-side validation and cover the payment edge cases."))
+                .andExpect(jsonPath("$.quests[4].status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.quests[4].progress").value(72))
+                .andExpect(jsonPath("$.quests[4].xpReward").value(180))
+                .andExpect(jsonPath("$.quests[4].assigneeId").value(1))
+                .andExpect(jsonPath("$.quests[4].externalReference").value(nullValue()))
+                .andExpect(jsonPath("$.quests[4].sortOrder").value(100))
+                .andExpect(jsonPath("$.quests[8].id").value(103))
+                .andExpect(jsonPath("$.quests[9].id").value(110))
                 .andExpect(jsonPath("$.raid.id").value(201))
                 .andExpect(jsonPath("$.raid.currentHp").value(180))
                 .andExpect(jsonPath("$.raid.status").value("ACTIVE"))
@@ -67,7 +81,11 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.reaction").value("level-up"))
                 .andExpect(jsonPath("$.bossDefeated").value(true))
                 .andExpect(jsonPath("$.quest.status").value("DONE"))
+                .andExpect(jsonPath("$.quest.description")
+                        .value("Fix server-side validation and cover the payment edge cases."))
+                .andExpect(jsonPath("$.quest.progress").value(100))
                 .andExpect(jsonPath("$.quest.externalReference").value(nullValue()))
+                .andExpect(jsonPath("$.quest.sortOrder").value(300))
                 .andExpect(jsonPath("$.player.totalXp").value(1100))
                 .andExpect(jsonPath("$.player.characterState").value("idle"))
                 .andExpect(jsonPath("$.raid.status").value("DEFEATED"));
@@ -75,7 +93,9 @@ class DemoApiTests {
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.player.totalXp").value(1100))
-                .andExpect(jsonPath("$.quests[0].status").value("DONE"))
+                .andExpect(jsonPath("$.quests[9].id").value(101))
+                .andExpect(jsonPath("$.quests[9].status").value("DONE"))
+                .andExpect(jsonPath("$.quests[9].progress").value(100))
                 .andExpect(jsonPath("$.raid.currentHp").value(0))
                 .andExpect(jsonPath("$.nextUnlock").value(nullValue()));
     }
@@ -105,6 +125,8 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.raidDamage").value(0))
                 .andExpect(jsonPath("$.reaction").value(nullValue()))
                 .andExpect(jsonPath("$.quest.status").value("DONE"))
+                .andExpect(jsonPath("$.quest.progress").value(100))
+                .andExpect(jsonPath("$.quest.sortOrder").value(300))
                 .andExpect(jsonPath("$.player.totalXp").value(1100))
                 .andExpect(jsonPath("$.raid.currentHp").value(0));
     }
@@ -121,11 +143,13 @@ class DemoApiTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.player.totalXp").value(920))
                 .andExpect(jsonPath("$.player.characterState").value("coding"))
-                .andExpect(jsonPath("$.quests", hasSize(3)))
-                .andExpect(jsonPath("$.quests[0].id").value(101))
-                .andExpect(jsonPath("$.quests[0].status").value("IN_PROGRESS"))
-                .andExpect(jsonPath("$.quests[1].status").value("TODO"))
-                .andExpect(jsonPath("$.quests[2].status").value("DONE"))
+                .andExpect(jsonPath("$.quests", hasSize(10)))
+                .andExpect(jsonPath("$.quests[0].id").value(104))
+                .andExpect(jsonPath("$.quests[2].id").value(102))
+                .andExpect(jsonPath("$.quests[4].id").value(101))
+                .andExpect(jsonPath("$.quests[4].status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.quests[4].progress").value(72))
+                .andExpect(jsonPath("$.quests[9].id").value(110))
                 .andExpect(jsonPath("$.raid.currentHp").value(180))
                 .andExpect(jsonPath("$.raid.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.nextUnlock.cosmeticKey").value("rare-hoodie"));

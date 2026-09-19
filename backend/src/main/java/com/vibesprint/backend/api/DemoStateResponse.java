@@ -28,10 +28,13 @@ public record DemoStateResponse(
     public record QuestView(
             long id,
             String title,
+            String description,
             String status,
+            Integer progress,
             int xpReward,
             long assigneeId,
-            String externalReference
+            String externalReference,
+            int sortOrder
     ) {
     }
 

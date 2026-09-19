@@ -45,7 +45,7 @@ public class DemoStateQueryService {
                 .orElseThrow(() -> new DemoStateNotReadyException("Player " + DEMO_PLAYER_ID + " is not ready"));
         Raid raid = raidRepository.findFirstByOrderByIdAsc()
                 .orElseThrow(() -> new DemoStateNotReadyException("Raid is not ready"));
-        List<Quest> quests = questRepository.findAllByOrderByIdAsc();
+        List<Quest> quests = questRepository.findAllInBoardOrder();
         boolean hasActiveQuest = quests.stream().anyMatch(quest -> quest.getStatus() == QuestStatus.IN_PROGRESS);
         ProgressionRules.PlayerProgress progress = progressionRules.describe(player.getTotalXp());
 

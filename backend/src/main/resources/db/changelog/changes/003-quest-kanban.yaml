@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-quest-kanban
+      author: vibesprint
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE quest
+                ADD COLUMN description TEXT NOT NULL DEFAULT '',
+                ADD COLUMN progress INTEGER,
+                ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 100;
+
+              UPDATE quest SET
+                description = 'Fix server-side validation and cover the payment edge cases.',
+                progress = 72,
+                sort_order = 100
+              WHERE id = 101;
+              UPDATE quest SET
+                description = 'Warn users before API traffic reaches the configured rate limit.',
+                progress = NULL,
+                sort_order = 100
+              WHERE id = 102;
+              UPDATE quest SET
+                description = 'Make login failures clearer and easier to resolve.',
+                progress = 100,
+                sort_order = 100
+              WHERE id = 103;
+
+              ALTER TABLE quest DROP CONSTRAINT ck_quest_status;
+
+              INSERT INTO quest
+                (id, title, description, status, progress, xp_reward, assignee_id, external_reference, sort_order)
+              VALUES
+                (104, 'Add keyboard shortcuts', 'Speed up the command palette and common actions.', 'BACKLOG', NULL, 250, 1, NULL, 100),
+                (105, 'Improve loading states', 'Make every wait feel clear and intentional.', 'BACKLOG', NULL, 180, 1, NULL, 200),
+                (106, 'Add achievement filters', 'Find earned badges by category and rarity.', 'TODO', NULL, 320, 1, NULL, 200),
+                (107, 'Add profile rewards', 'Surface earned badges on the player profile.', 'TESTING', 35, 420, 1, NULL, 100),
+                (108, 'Validate GitHub webhook', 'Check event signatures and safe handling of retries.', 'TESTING', 90, 350, 1, '#148 Webhook validation', 200),
+                (109, 'Test level-up animation', 'Review the reward moment and reduced motion state.', 'TESTING', 85, 280, 1, NULL, 300),
+                (110, 'Connect GitHub', 'Link commits and pull requests to Quest progress.', 'DONE', 100, 300, 1, NULL, 200);
+
+              ALTER TABLE quest
+                ADD CONSTRAINT ck_quest_status CHECK (
+                  status IN ('BACKLOG', 'TODO', 'IN_PROGRESS', 'TESTING', 'DONE')
+                ),
+                ADD CONSTRAINT ck_quest_progress_range CHECK (
+                  progress IS NULL OR progress BETWEEN 0 AND 100
+                ),
+                ADD CONSTRAINT ck_quest_progress_by_status CHECK (
+                  (status IN ('BACKLOG', 'TODO') AND progress IS NULL)
+                  OR (status IN ('IN_PROGRESS', 'TESTING') AND progress BETWEEN 0 AND 100)
+                  OR (status = 'DONE' AND progress = 100)
+                ),
+                ADD CONSTRAINT ck_quest_sort_order_positive CHECK (sort_order > 0);
+
+              ALTER TABLE quest ALTER COLUMN description DROP DEFAULT;
+              ALTER TABLE quest ALTER COLUMN sort_order DROP DEFAULT;
+              CREATE SEQUENCE quest_id_seq START WITH 1000 INCREMENT BY 1;
