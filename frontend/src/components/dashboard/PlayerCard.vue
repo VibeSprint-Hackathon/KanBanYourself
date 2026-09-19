@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CharacterReaction, DemoState } from '@/api/demo.types';
+import type { CharacterReaction, CharacterState, DemoState } from '@/api/demo.types';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
 import CharacterAvatar from './CharacterAvatar.vue';
 defineProps<{
@@ -12,6 +12,7 @@ defineProps<{
     xpProgress: number;
     xpToReward: number;
   };
+  characterState: CharacterState;
   reaction: CharacterReaction | null;
 }>();
 </script>
@@ -34,9 +35,10 @@ defineProps<{
     </div>
     <CharacterAvatar
       class="player-character"
-      :src="presentation.characterSrc"
       :name="player.name"
+      :persistent-state="characterState"
       :reaction="reaction"
+      :hoodie-enabled="player.cosmeticKey !== 'base'"
     />
     <div class="player-progress">
       <div class="spread progress-heading">
