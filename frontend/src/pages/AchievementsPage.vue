@@ -159,9 +159,10 @@ onBeforeUnmount(() => stopRealtime?.());
     </section>
 
     <AchievementDetailsDrawer
-      v-if="selectedAchievement"
+      v-if="selectedAchievement && selectedPlayer"
       v-model="detailsOpen"
       :achievement="selectedAchievement"
+      :player="selectedPlayer"
     />
   </q-page>
 </template>
