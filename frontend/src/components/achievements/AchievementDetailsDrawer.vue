@@ -1,9 +1,46 @@
 <script setup lang="ts">
-import { mdiCheck, mdiLockOutline } from '@quasar/extras/mdi-v7';
+import { ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { mdiCheck, mdiLinkedin, mdiLockOutline } from '@quasar/extras/mdi-v7';
+import type { Player } from '@/api/demo.types';
+import { copyText, shareAchievementOnLinkedIn } from '@/utils/achievementShare';
 import { achievementProgress, type Achievement } from './achievement.types';
 
 const open = defineModel<boolean>({ required: true });
-defineProps<{ achievement: Achievement }>();
+const props = defineProps<{
+  achievement: Achievement;
+  player: Pick<Player, 'id' | 'name'>;
+}>();
+const router = useRouter();
+const shareText = ref('');
+const shareFeedback = ref('');
+
+watch(
+  () => props.achievement.key,
+  () => {
+    shareText.value = '';
+    shareFeedback.value = '';
+  },
+);
+
+async function shareOnLinkedIn(): Promise<void> {
+  const attempt = shareAchievementOnLinkedIn(router, props.player, props.achievement);
+  shareText.value = attempt.text;
+  const copied = await attempt.copied;
+  if (!attempt.linkedinOpened) {
+    shareFeedback.value = 'LinkedIn could not be opened. Your post text is ready below.';
+  } else if (copied) {
+    shareFeedback.value = 'Post text copied · paste it into LinkedIn.';
+  } else {
+    shareFeedback.value = 'LinkedIn opened. Copy the suggested post below.';
+  }
+}
+
+async function copySuggestedText(): Promise<void> {
+  shareFeedback.value = (await copyText(shareText.value))
+    ? 'Post text copied · paste it into LinkedIn.'
+    : 'Copy was blocked. Select the text below and copy it manually.';
+}
 </script>
 
 <template>
@@ -64,6 +101,24 @@ defineProps<{ achievement: Achievement }>();
         <div v-if="achievement.unlockedAt" class="unlocked-date spread">
           <span class="eyebrow muted">Unlocked</span><strong>{{ achievement.unlockedAt }}</strong>
         </div>
+        <section v-if="achievement.unlocked" class="share-section">
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            :icon="mdiLinkedin"
+            label="Share on LinkedIn"
+            aria-label="Share this achievement on LinkedIn"
+            @click="shareOnLinkedIn"
+          />
+          <div class="share-feedback" aria-live="polite">{{ shareFeedback }}</div>
+          <div v-if="shareText" class="share-copy">
+            <label for="achievement-share-text" class="eyebrow muted">Suggested post</label>
+            <textarea id="achievement-share-text" :value="shareText" readonly rows="7" />
+            <q-btn flat no-caps label="Copy text" @click="copySuggestedText" />
+          </div>
+        </section>
+        <p v-else class="locked-share-note">Unlock this Achievement to share it.</p>
       </div>
       <footer class="drawer-footer">
         <q-btn flat no-caps label="Close" @click="open = false" />
@@ -157,6 +212,42 @@ section .progress-track {
 }
 .unlocked-date strong {
   font-size: 14px;
+}
+.share-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 26px;
+}
+.share-section > .q-btn {
+  min-height: 44px;
+}
+.share-feedback {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.share-copy {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #f6fafc;
+}
+.share-copy textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px;
+  color: var(--ink);
+  background: var(--card);
+  font: 12px/1.5 monospace;
+}
+.locked-share-note {
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 .drawer-footer {
   padding: 20px 24px;

@@ -25,6 +25,11 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/achievements/share/:playerId/:achievementKey',
+    component: () => import('@/pages/AchievementSharePage.vue'),
+  },
+
+  {
     path: '/:catchAll(.*)*',
     component: () => import('@/pages/ErrorNotFound.vue'),
   },

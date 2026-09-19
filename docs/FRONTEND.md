@@ -14,6 +14,7 @@ Dashboard, Quests и Raids используют общий серверный st
 - `/quests`: серверные Квесты в пяти колонках, создание, редактирование, удаление, перемещение и завершение через backend.
 - `/raids`: управление lifecycle Raid с Active, Draft и History, созданием, редактированием и явными командами.
 - `/achievements`: реальные достижения выбранного игрока, фильтры, featured-карточка и drawer деталей.
+- `/achievements/share/{playerId}/{achievementKey}`: публичное read-only представление реально открытого достижения.
 
 Настройки доски изменяют только представление: порядок, названия и видимость колонок, компактный режим и показ завершённых Квестов. Они сохраняются локально; сами Квесты всегда берутся с backend.
 
@@ -47,6 +48,8 @@ Dashboard, layout, Quests, Raids и realtime делят небольшой Pinia
 Achievements загружает `GET /api/players/{playerId}/achievements` через отдельный API-модуль. Страница перечитывает данные при смене выбранного профиля и после progression-события этого игрока, в том числе без нового unlock. Правила и счётчики на frontend не вычисляются.
 
 `AchievementUnlockNotification` смонтирован один раз в layout. Он берёт `unlockedAchievements` только из уникальных событий store, показывает открытия выбранного профиля FIFO-очередью и не воспроизводит звук. Анимация отключается при `prefers-reduced-motion`.
+
+Открытое достижение можно отправить в LinkedIn из drawer. Frontend формирует share route и короткий suggested post, best-effort копирует текст и открывает пользовательский LinkedIn composer. OAuth, LinkedIn API, токены и автоматическая публикация не используются; share page повторно проверяет владельца и unlock через backend.
 
 ## API-слой
 
