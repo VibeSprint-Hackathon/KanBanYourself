@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { mdiCheck, mdiLockOutline } from '@quasar/extras/mdi-v7';
-import { achievementRewardLabel, type Achievement } from './achievement.types';
+import type { Achievement } from './achievement.types';
 
 defineProps<{ achievement: Achievement }>();
-defineEmits<{ open: [id: number] }>();
+defineEmits<{ open: [key: string] }>();
 </script>
 
 <template>
   <article
     class="achievement-card"
-    :class="{ unlocked: achievement.unlocked, newly: achievement.newlyUnlocked }"
+    :class="{ unlocked: achievement.unlocked }"
   >
     <button
       type="button"
       :aria-label="`Open achievement: ${achievement.name}`"
-      @click="$emit('open', achievement.id)"
+      @click="$emit('open', achievement.key)"
     >
       <div class="card-top spread">
         <span class="achievement-icon"><q-icon :name="achievement.icon" size="20px" /></span>
@@ -25,7 +25,11 @@ defineEmits<{ open: [id: number] }>();
       </div>
       <h3>{{ achievement.name }}</h3>
       <p>{{ achievement.description }}</p>
-      <div class="card-reward">{{ achievementRewardLabel(achievement.reward) }}</div>
+      <div class="card-progress">
+        {{ achievement.currentProgress.toLocaleString('en-US') }} /
+        {{ achievement.targetProgress.toLocaleString('en-US') }}
+      </div>
+      <div class="card-reward">{{ achievement.rewardLabel }}</div>
     </button>
   </article>
 </template>
@@ -111,6 +115,12 @@ p {
   border-top: 1px solid var(--border);
   color: var(--orange);
   font-size: 14px;
+  font-weight: 700;
+}
+.card-progress {
+  margin-top: 10px;
+  color: var(--blue);
+  font-size: 12px;
   font-weight: 700;
 }
 </style>

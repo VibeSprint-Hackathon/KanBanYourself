@@ -47,8 +47,8 @@ class ProgressionConcurrencyTests {
         CountDownLatch start = new CountDownLatch(1);
 
         try {
-            Future<ProgressionResult> first = executor.submit(() -> completeAfterSignal("parallel-1", ready, start));
-            Future<ProgressionResult> second = executor.submit(() -> completeAfterSignal("parallel-2", ready, start));
+            Future<ProgressionResult> first = executor.submit(() -> completeAfterSignal(101L, "parallel-1", ready, start));
+            Future<ProgressionResult> second = executor.submit(() -> completeAfterSignal(101L, "parallel-2", ready, start));
 
             assertTrue(ready.await(5, TimeUnit.SECONDS));
             start.countDown();
@@ -78,7 +78,39 @@ class ProgressionConcurrencyTests {
         }
     }
 
+    @Test
+    void keepsAchievementProgressFromTwoConcurrentQuestsForOnePlayer() throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+
+        try {
+            Future<ProgressionResult> first = executor.submit(
+                    () -> completeAfterSignal(101L, "achievement-parallel-1", ready, start)
+            );
+            Future<ProgressionResult> second = executor.submit(
+                    () -> completeAfterSignal(106L, "achievement-parallel-2", ready, start)
+            );
+
+            assertTrue(ready.await(5, TimeUnit.SECONDS));
+            start.countDown();
+            assertTrue(first.get(15, TimeUnit.SECONDS).applied());
+            assertTrue(second.get(15, TimeUnit.SECONDS).applied());
+
+            assertEquals(2, jdbcTemplate.queryForObject(
+                    """
+                    select progress from player_achievement
+                    where player_id = 1 and achievement_key = 'QUEST_APPRENTICE'
+                    """,
+                    Integer.class
+            ));
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
     private ProgressionResult completeAfterSignal(
+            long questId,
             String eventId,
             CountDownLatch ready,
             CountDownLatch start
@@ -87,7 +119,7 @@ class ProgressionConcurrencyTests {
         if (!start.await(5, TimeUnit.SECONDS)) {
             throw new IllegalStateException("Concurrent completion did not start in time");
         }
-        return progressionService.completeQuest(new CompleteQuestCommand(101L, eventId, ProgressionSource.DEMO));
+        return progressionService.completeQuest(new CompleteQuestCommand(questId, eventId, ProgressionSource.DEMO));
     }
 
     private void restoreSeed() {

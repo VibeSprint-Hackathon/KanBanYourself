@@ -1,7 +1,10 @@
 package com.vibesprint.backend.progression;
 
+import com.vibesprint.backend.achievement.AchievementUnlock;
 import com.vibesprint.backend.quest.QuestStatus;
 import com.vibesprint.backend.raid.RaidStatus;
+
+import java.util.List;
 
 public record ProgressionResult(
         String eventId,
@@ -13,10 +16,15 @@ public record ProgressionResult(
         CosmeticUnlock unlockedCosmetic,
         Reaction reaction,
         boolean bossDefeated,
+        List<AchievementUnlock> unlockedAchievements,
         QuestSnapshot quest,
         PlayerSnapshot player,
         RaidSnapshot raid
 ) {
+
+    public ProgressionResult {
+        unlockedAchievements = List.copyOf(unlockedAchievements);
+    }
 
     public enum Reason {
         ALREADY_COMPLETED

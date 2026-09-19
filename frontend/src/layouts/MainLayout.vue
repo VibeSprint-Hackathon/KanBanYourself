@@ -13,6 +13,7 @@ import { dashboardPresentation as view } from '@/fixtures/dashboard.fixture';
 import type { CharacterReaction, CharacterState } from '@/api/demo.types';
 import CharacterAvatar from '@/components/dashboard/CharacterAvatar.vue';
 import RaidDamageNotification from '@/components/raids/RaidDamageNotification.vue';
+import AchievementUnlockNotification from '@/components/achievements/AchievementUnlockNotification.vue';
 import { useDemoStore } from '@/stores/demo';
 
 const route = useRoute();
@@ -162,6 +163,7 @@ function clearReactionTimer(): void {
     </q-drawer>
     <q-page-container><router-view /></q-page-container>
     <RaidDamageNotification />
+    <AchievementUnlockNotification />
   </q-layout>
 </template>
 

@@ -26,7 +26,8 @@ public class DemoResetService {
 
     @Transactional
     public DemoStateResponse reset() {
-        jdbcTemplate.execute("lock table quest, player, raid in access exclusive mode");
+        jdbcTemplate.execute("lock table quest, player, raid, player_achievement in access exclusive mode");
+        jdbcTemplate.update("delete from player_achievement");
         jdbcTemplate.update("delete from quest");
         jdbcTemplate.update("delete from raid");
         jdbcTemplate.update("delete from player");

@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-achievements
+      author: vibesprint
+      changes:
+        - createTable:
+            tableName: player_achievement
+            columns:
+              - column:
+                  name: player_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: achievement_key
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: progress
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: unlocked_at
+                  type: timestamptz
+        - addPrimaryKey:
+            tableName: player_achievement
+            columnNames: player_id, achievement_key
+            constraintName: pk_player_achievement
+        - addForeignKeyConstraint:
+            baseTableName: player_achievement
+            baseColumnNames: player_id
+            referencedTableName: player
+            referencedColumnNames: id
+            constraintName: fk_player_achievement_player
+            onDelete: CASCADE
+        - sql:
+            sql: |
+              ALTER TABLE player_achievement
+                ADD CONSTRAINT chk_player_achievement_progress CHECK (progress >= 0);

@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changes/005-multi-player.yaml
   - include:
       file: db/changelog/changes/005-github-sync-dedupe.yaml
+  - include:
+      file: db/changelog/changes/006-achievements.yaml
