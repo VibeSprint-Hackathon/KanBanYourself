@@ -59,7 +59,7 @@ export function useDashboardDemo() {
   );
 
   watch(lastProgression, (progression) => {
-    if (progression?.applied) {
+    if (progression?.applied && progression.player.id === selectedPlayer.value?.id) {
       showProgression(progression);
     }
   });

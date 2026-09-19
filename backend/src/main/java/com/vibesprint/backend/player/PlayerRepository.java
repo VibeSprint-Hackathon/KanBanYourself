@@ -11,6 +11,8 @@ import java.util.Optional;
 
 public interface PlayerRepository extends JpaRepository<Player, Long> {
 
+    Optional<Player> findByName(String name);
+
     List<Player> findAllByOrderByIdAsc();
 
     Optional<Player> findByGithubUserId(Long githubUserId);

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { mdiClose, mdiMagnify, mdiPlus, mdiTuneVariant } from '@quasar/extras/mdi-v7';
+import type { ProgressionResult } from '@/api/demo.types';
 import { useQuestBoard } from '@/composables/useQuestBoard';
 import { dashboardPresentation as header } from '@/fixtures/dashboard.fixture';
 import {
@@ -116,11 +117,7 @@ async function confirmDelete(): Promise<void> {
 async function completeSelectedQuest(): Promise<void> {
   if (!selected.value || selected.value.columnId === 'DONE') return;
   const progression = await board.completeQuest(selected.value.quest.id);
-  if (progression?.applied) {
-    announcement.value = `Quest completed. ${progression.xpGained} XP earned.`;
-  } else if (progression) {
-    announcement.value = 'Quest was already completed.';
-  }
+  if (progression) announcement.value = completionAnnouncement(progression);
 }
 
 function columnAction(id: BoardColumnId, action: ColumnAction): void {
@@ -149,12 +146,16 @@ async function moveQuest(
   const result = await board.moveQuest(id, column, beforeId);
   if (!result) return;
   if (typeof result !== 'boolean') {
-    announcement.value = result.applied
-      ? `Quest completed. ${result.xpGained} XP earned.`
-      : 'Quest was already completed.';
+    announcement.value = completionAnnouncement(result);
     return;
   }
   announcement.value = `Quest moved to ${columns.value.find((item) => item.id === column)?.label ?? column}`;
+}
+
+function completionAnnouncement(progression: ProgressionResult): string {
+  return progression.applied
+    ? `Quest completed. ${progression.player.name} earned ${progression.xpGained} XP.`
+    : 'Quest was already completed.';
 }
 </script>
 
