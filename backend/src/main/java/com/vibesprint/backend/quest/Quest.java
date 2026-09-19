@@ -129,6 +129,7 @@ public class Quest {
             QuestStatus status,
             Integer progress,
             int xpReward,
+            Player assignee,
             String externalReference,
             int sortOrder
     ) {
@@ -139,6 +140,7 @@ public class Quest {
         this.status = status;
         this.progress = progress;
         this.xpReward = xpReward;
+        this.assignee = assignee;
         this.sortOrder = sortOrder;
     }
 

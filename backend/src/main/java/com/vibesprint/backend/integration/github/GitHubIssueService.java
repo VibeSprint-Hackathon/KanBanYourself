@@ -183,6 +183,7 @@ public class GitHubIssueService {
                     status,
                     progress,
                     quest.getXpReward(),
+                    quest.getAssignee(),
                     externalReference,
                     nextSortOrder(status)
             );
@@ -331,12 +332,14 @@ public class GitHubIssueService {
                 new DemoStateResponse.PlayerView(
                         assignee.getId(),
                         assignee.getName(),
+                        assignee.getGithubLogin(),
                         assignee.getTotalXp(),
                         currentLevel,
                         nextLevelXp,
                         "Developer",
                         null,
-                        "coding"
+                        "coding",
+                        null
                 ),
                 null,
                 "GITHUB",

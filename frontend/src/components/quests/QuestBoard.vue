@@ -2,10 +2,12 @@
 import { ref, watch } from 'vue';
 import QuestColumn from './QuestColumn.vue';
 import type { BoardColumn, BoardColumnId, BoardQuest, ColumnAction } from './board.types';
+import type { Player } from '@/api/demo.types';
 const props = defineProps<{
   columns: BoardColumn[];
   allColumns: BoardColumn[];
   quests: BoardQuest[];
+  players: Player[];
   compact: boolean;
   searching: boolean;
   readOnly: boolean;
@@ -72,6 +74,7 @@ function leaveBoard(event: DragEvent) {
       :key="column.id"
       :column="column"
       :quests="quests.filter((q) => q.columnId === column.id)"
+      :players="players"
       :compact="compact"
       :searching="searching"
       :read-only="readOnly"

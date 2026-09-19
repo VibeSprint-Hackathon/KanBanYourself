@@ -7,12 +7,14 @@ export type CharacterReaction = 'happy' | 'level-up';
 export interface Player {
   id: number;
   name: string;
+  githubLogin: string | null;
   totalXp: number;
   level: number;
   nextLevelXp: number | null;
   title: string;
   cosmeticKey: string;
   characterState: CharacterState;
+  nextUnlock: UnlockTarget | null;
 }
 
 export interface Quest {
@@ -33,6 +35,7 @@ export interface CreateQuestRequest {
   status: Exclude<QuestStatus, 'DONE'>;
   progress: number | null;
   xpReward: number;
+  assigneeId: number;
   externalReference: string | null;
 }
 
@@ -42,6 +45,7 @@ export interface UpdateQuestRequest {
   status: QuestStatus;
   progress: number | null;
   xpReward: number;
+  assigneeId: number;
   externalReference: string | null;
 }
 
@@ -76,10 +80,9 @@ export interface UnlockTarget {
 }
 
 export interface DemoState {
-  player: Player;
+  players: Player[];
   quests: Quest[];
   raid: Raid | null;
-  nextUnlock: UnlockTarget | null;
 }
 
 export interface CosmeticUnlock {

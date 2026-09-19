@@ -1,6 +1,8 @@
 package com.vibesprint.backend.api;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import com.vibesprint.backend.integration.DemoResetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -30,15 +32,26 @@ class DemoApiTests {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private DemoResetService resetService;
+
+    @BeforeEach
+    void resetDemo() {
+        resetService.reset();
+    }
+
     @Test
     void returnsDeterministicDemoState() throws Exception {
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.player.id").value(1))
-                .andExpect(jsonPath("$.player.totalXp").value(920))
-                .andExpect(jsonPath("$.player.level").value(4))
-                .andExpect(jsonPath("$.player.characterState").value("coding"))
+                .andExpect(jsonPath("$.players", hasSize(3)))
+                .andExpect(jsonPath("$.players[0].id").value(1))
+                .andExpect(jsonPath("$.players[0].githubLogin").value("amjastsov"))
+                .andExpect(jsonPath("$.players[0].totalXp").value(920))
+                .andExpect(jsonPath("$.players[0].level").value(4))
+                .andExpect(jsonPath("$.players[0].characterState").value("coding"))
+                .andExpect(jsonPath("$.players[1].characterState").value("idle"))
                 .andExpect(jsonPath("$.quests", hasSize(10)))
                 .andExpect(jsonPath("$.quests[0].id").value(104))
                 .andExpect(jsonPath("$.quests[1].id").value(105))
@@ -57,8 +70,8 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.raid.id").value(201))
                 .andExpect(jsonPath("$.raid.currentHp").value(180))
                 .andExpect(jsonPath("$.raid.status").value("ACTIVE"))
-                .andExpect(jsonPath("$.nextUnlock.level").value(5))
-                .andExpect(jsonPath("$.nextUnlock.cosmeticKey").value("rare-hoodie"));
+                .andExpect(jsonPath("$.players[0].nextUnlock.level").value(5))
+                .andExpect(jsonPath("$.players[0].nextUnlock.cosmeticKey").value("rare-hoodie"));
     }
 
     @Test
@@ -92,12 +105,12 @@ class DemoApiTests {
 
         mockMvc.perform(get("/api/demo/state"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.player.totalXp").value(1100))
+                .andExpect(jsonPath("$.players[0].totalXp").value(1100))
                 .andExpect(jsonPath("$.quests[9].id").value(101))
                 .andExpect(jsonPath("$.quests[9].status").value("DONE"))
                 .andExpect(jsonPath("$.quests[9].progress").value(100))
                 .andExpect(jsonPath("$.raid").value(nullValue()))
-                .andExpect(jsonPath("$.nextUnlock").value(nullValue()));
+                .andExpect(jsonPath("$.players[0].nextUnlock").value(nullValue()));
     }
 
     @Test
@@ -141,8 +154,8 @@ class DemoApiTests {
 
         mockMvc.perform(post("/api/demo/reset"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.player.totalXp").value(920))
-                .andExpect(jsonPath("$.player.characterState").value("coding"))
+                .andExpect(jsonPath("$.players[0].totalXp").value(920))
+                .andExpect(jsonPath("$.players[0].characterState").value("coding"))
                 .andExpect(jsonPath("$.quests", hasSize(10)))
                 .andExpect(jsonPath("$.quests[0].id").value(104))
                 .andExpect(jsonPath("$.quests[2].id").value(102))
@@ -152,7 +165,7 @@ class DemoApiTests {
                 .andExpect(jsonPath("$.quests[9].id").value(110))
                 .andExpect(jsonPath("$.raid.currentHp").value(180))
                 .andExpect(jsonPath("$.raid.status").value("ACTIVE"))
-                .andExpect(jsonPath("$.nextUnlock.cosmeticKey").value("rare-hoodie"));
+                .andExpect(jsonPath("$.players[0].nextUnlock.cosmeticKey").value("rare-hoodie"));
     }
 
     @Test

@@ -18,6 +18,7 @@ export function useQuestBoard() {
   const store = useDemoStore();
   const {
     state,
+    selectedPlayer,
     loading,
     error,
     realtimeStatus,
@@ -35,6 +36,7 @@ export function useQuestBoard() {
     () => creatingQuest.value || mutatingQuestId.value !== null || completingQuestId.value !== null,
   );
   const quests = computed(() => state.value?.quests.map(toBoardQuest) ?? []);
+  const players = computed(() => state.value?.players ?? []);
   const visibleColumns = computed(() =>
     columns.value.filter(
       (column) => column.visible && (column.id !== 'DONE' || showCompleted.value),
@@ -143,6 +145,8 @@ export function useQuestBoard() {
 
   return {
     state,
+    selectedPlayer,
+    players,
     quests,
     columns,
     search,
@@ -186,6 +190,7 @@ function normalizeForm(value: QuestFormValue): UpdateQuestRequest {
     status,
     progress,
     xpReward: Math.round(Number(value.xpReward)),
+    assigneeId: value.assigneeId,
     externalReference: value.externalReference.trim() || null,
   };
 }

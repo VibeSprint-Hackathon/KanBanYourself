@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Quest } from '@/api/demo.types';
+import type { Player, Quest } from '@/api/demo.types';
 import { safeReferenceUrl } from '@/components/quests/board.types';
 import {
   formatNumber,
@@ -11,6 +11,7 @@ const open = defineModel<boolean>({ required: true });
 const props = withDefaults(
   defineProps<{
     quest: Quest;
+    assignee: Player | undefined;
     presentation: QuestPresentation;
     completing?: boolean;
     mutating?: boolean;
@@ -66,6 +67,10 @@ const referenceUrl = computed(() => safeReferenceUrl(props.quest.externalReferen
         <section>
           <h3 class="eyebrow muted">Description</h3>
           <p>{{ presentation.description }}</p>
+        </section>
+        <section>
+          <h3 class="eyebrow muted">Assignee</h3>
+          <p>{{ assignee?.name ?? 'Unknown player' }}</p>
         </section>
         <section v-if="showProgress">
           <div class="spread">

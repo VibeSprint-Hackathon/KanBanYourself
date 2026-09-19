@@ -22,11 +22,12 @@
 | B3b UI вкладок | `DONE` | `/quests` и `/raids` реализованы визуально на fixture |
 | I1Q Quests + backend | `DONE` | Доска использует общий `DemoState` и complete API |
 | I1R Raids + backend | `DONE` | Активный рейд и последний урон приходят с backend |
+| I1P Профили и исполнители | `DONE` | 3 игрока, mock switch, assignee CRUD и персональный Dashboard |
 | I1W Запись и история | `OPTIONAL` | CRUD Квестов и история рейдов после MVP |
 | I2 Полный прогон | `NEXT` | Три повторяемых цикла и проверка ошибок |
 | P1/P2 Полировка | `PLANNED` | Только после стабильного I2 |
 
-Backend подтверждён 40 тестами на Java 21 и PostgreSQL 17. Frontend проходит typecheck и production build.
+Backend подтверждён полным набором из 70 тестов на Java 21 и PostgreSQL 17. Frontend проходит typecheck и production build.
 
 ## Выполненная основа
 
@@ -39,6 +40,7 @@ Backend подтверждён 40 тестами на Java 21 и PostgreSQL 17. 
 - A1: миграции, seed, сущности и репозитории готовы.
 - A2: завершение Квеста атомарно меняет Квест, XP и рейд; повтор не начисляет награду.
 - A3: реализованы `GET /api/demo/state` и `POST /api/demo/quests/{questId}/complete`.
+- I1P: `GET /api/players`, GitHub identity mapping и начисление XP исполнителю покрыты тестами.
 
 ### Поток B — интерфейс
 

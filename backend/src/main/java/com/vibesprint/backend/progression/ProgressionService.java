@@ -122,7 +122,7 @@ public class ProgressionService {
             ProgressionRules.PlayerProgress playerProgress,
             Raid raid
     ) {
-        boolean hasActiveQuest = questRepository.existsByStatus(QuestStatus.IN_PROGRESS);
+        boolean hasActiveQuest = questRepository.existsByAssigneeIdAndStatus(player.getId(), QuestStatus.IN_PROGRESS);
         boolean bossDefeated = raid != null && raid.getStatus() == RaidStatus.COMPLETED;
 
         return new ProgressionResult(
@@ -149,6 +149,7 @@ public class ProgressionService {
                 new ProgressionResult.PlayerSnapshot(
                         player.getId(),
                         player.getName(),
+                        player.getGithubLogin(),
                         player.getTotalXp(),
                         playerProgress.level(),
                         playerProgress.nextLevelXp(),

@@ -14,6 +14,7 @@ public record UpdateQuestRequest(
         @NotNull QuestStatus status,
         @Min(0) @Max(100) Integer progress,
         @Positive int xpReward,
+        @Positive long assigneeId,
         @Size(max = 500) String externalReference
 ) {
 }

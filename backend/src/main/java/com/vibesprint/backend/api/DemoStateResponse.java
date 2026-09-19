@@ -3,25 +3,27 @@ package com.vibesprint.backend.api;
 import java.util.List;
 
 public record DemoStateResponse(
-        PlayerView player,
+        List<PlayerView> players,
         List<QuestView> quests,
-        RaidView raid,
-        UnlockView nextUnlock
+        RaidView raid
 ) {
 
     public DemoStateResponse {
+        players = List.copyOf(players);
         quests = List.copyOf(quests);
     }
 
     public record PlayerView(
             long id,
             String name,
+            String githubLogin,
             int totalXp,
             int level,
             Integer nextLevelXp,
             String title,
             String cosmeticKey,
-            String characterState
+            String characterState,
+            UnlockView nextUnlock
     ) {
     }
 

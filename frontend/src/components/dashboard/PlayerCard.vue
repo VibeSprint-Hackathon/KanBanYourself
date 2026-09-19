@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type { CharacterReaction, CharacterState, DemoState } from '@/api/demo.types';
+import type { CharacterReaction, CharacterState, Player } from '@/api/demo.types';
 import { formatNumber } from '@/fixtures/dashboard.fixture';
 import CharacterAvatar from './CharacterAvatar.vue';
 defineProps<{
-  player: DemoState['player'];
-  nextUnlock: DemoState['nextUnlock'];
+  player: Player;
   presentation: {
     subtitle: string;
     status: string;
@@ -54,14 +53,14 @@ defineProps<{
         aria-label="Level progress"
         size="14px"
       />
-      <div v-if="nextUnlock" class="next-reward">
+      <div v-if="player.nextUnlock" class="next-reward">
         <div class="eyebrow orange">
           <q-icon name="auto_awesome" size="17px" />
-          {{ player.cosmeticKey === nextUnlock.cosmeticKey ? 'Reward unlocked' : 'Next reward' }}
+          {{ player.cosmeticKey === player.nextUnlock.cosmeticKey ? 'Reward unlocked' : 'Next reward' }}
         </div>
         <div class="spread reward-detail">
-          <h3>{{ nextUnlock.displayName }}</h3>
-          <strong v-if="player.cosmeticKey !== nextUnlock.cosmeticKey" class="orange"
+          <h3>{{ player.nextUnlock.displayName }}</h3>
+          <strong v-if="player.cosmeticKey !== player.nextUnlock.cosmeticKey" class="orange"
             >{{ formatNumber(presentation.xpToReward) }} XP</strong
           >
           <q-icon v-else name="check_circle" size="20px" class="green" />

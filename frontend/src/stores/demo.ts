@@ -35,9 +35,11 @@ import type {
 import { progressionRealtime, type RealtimeStatus } from '@/realtime/progression';
 
 const DEFAULT_ERROR = 'Backend is unavailable. Check the server and try again.';
+const SELECTED_PLAYER_KEY = 'vibesprint.selected-player-id';
 
 export const useDemoStore = defineStore('demo', () => {
   const state = ref<DemoState | null>(null);
+  const selectedPlayerId = ref<number | null>(loadSelectedPlayerId());
   const loading = ref(false);
   const completingQuestId = ref<number | null>(null);
   const creatingQuest = ref(false);
@@ -49,6 +51,7 @@ export const useDemoStore = defineStore('demo', () => {
   const mutatingRaidId = ref<number | null>(null);
   const error = ref<string | null>(null);
   const lastProgression = ref<ProgressionResult | null>(null);
+  const progressionEvents = ref<ProgressionResult[]>([]);
   const realtimeStatus = ref<RealtimeStatus>('disconnected');
   const handledEventIds = new Set<string>();
 
@@ -57,6 +60,12 @@ export const useDemoStore = defineStore('demo', () => {
   let stopStatus: (() => void) | undefined;
 
   const hasState = computed(() => state.value !== null);
+  const selectedPlayer = computed(
+    () =>
+      state.value?.players.find((player) => player.id === selectedPlayerId.value) ??
+      state.value?.players[0] ??
+      null,
+  );
 
   async function loadState(silent = false): Promise<boolean> {
     if (!silent) {
@@ -65,7 +74,7 @@ export const useDemoStore = defineStore('demo', () => {
     error.value = null;
 
     try {
-      state.value = await getDemoState();
+      setState(await getDemoState());
       return true;
     } catch (cause) {
       error.value = errorMessage(cause);
@@ -168,7 +177,7 @@ export const useDemoStore = defineStore('demo', () => {
   async function refreshRaidsAndState(): Promise<boolean> {
     const [nextRaids, nextState] = await Promise.all([getRaids(), getDemoState()]);
     raids.value = nextRaids;
-    state.value = nextState;
+    setState(nextState);
     return true;
   }
 
@@ -179,7 +188,7 @@ export const useDemoStore = defineStore('demo', () => {
     creatingQuest.value = true;
     error.value = null;
     try {
-      state.value = await createDemoQuest(request);
+      setState(await createDemoQuest(request));
       return true;
     } catch (cause) {
       error.value = errorMessage(cause);
@@ -208,7 +217,7 @@ export const useDemoStore = defineStore('demo', () => {
     mutatingQuestId.value = questId;
     error.value = null;
     try {
-      state.value = await request();
+      setState(await request());
       return true;
     } catch (cause) {
       error.value = errorMessage(cause);
@@ -227,10 +236,11 @@ export const useDemoStore = defineStore('demo', () => {
     error.value = null;
 
     try {
-      state.value = await resetDemoState();
+      setState(await resetDemoState());
       raids.value = await getRaids();
       handledEventIds.clear();
       lastProgression.value = null;
+      progressionEvents.value = [];
       return true;
     } catch (cause) {
       error.value = errorMessage(cause);
@@ -255,7 +265,9 @@ export const useDemoStore = defineStore('demo', () => {
       }
       state.value = {
         ...state.value,
-        player: progression.player,
+        players: state.value.players.map((player) =>
+          player.id === progression.player.id ? progression.player : player,
+        ),
         quests: sortQuests(quests),
         raid: progression.raid?.status === 'ACTIVE' ? progression.raid : null,
       };
@@ -267,6 +279,7 @@ export const useDemoStore = defineStore('demo', () => {
 
     handledEventIds.add(progression.eventId);
     lastProgression.value = progression;
+    progressionEvents.value = [...progressionEvents.value.slice(-19), progression];
   }
 
   function startRealtime(): () => void {
@@ -303,8 +316,37 @@ export const useDemoStore = defineStore('demo', () => {
     };
   }
 
+  function selectPlayer(playerId: number): void {
+    if (!state.value?.players.some((player) => player.id === playerId)) return;
+    selectedPlayerId.value = playerId;
+    try {
+      localStorage.setItem(SELECTED_PLAYER_KEY, String(playerId));
+    } catch {
+      // Profile switching remains usable when storage is unavailable.
+    }
+  }
+
+  function setState(nextState: DemoState): void {
+    state.value = nextState;
+    const requested = selectedPlayerId.value;
+    const fallback = nextState.players[0]?.id ?? null;
+    selectedPlayerId.value =
+      requested !== null && nextState.players.some((player) => player.id === requested)
+        ? requested
+        : fallback;
+    if (selectedPlayerId.value !== null) {
+      try {
+        localStorage.setItem(SELECTED_PLAYER_KEY, String(selectedPlayerId.value));
+      } catch {
+        // Persisting the mock profile is optional.
+      }
+    }
+  }
+
   return {
     state,
+    selectedPlayerId,
+    selectedPlayer,
     loading,
     completingQuestId,
     creatingQuest,
@@ -316,6 +358,7 @@ export const useDemoStore = defineStore('demo', () => {
     mutatingRaidId,
     error,
     lastProgression,
+    progressionEvents,
     realtimeStatus,
     hasState,
     loadState,
@@ -333,8 +376,18 @@ export const useDemoStore = defineStore('demo', () => {
     deleteRaid,
     resetDemo,
     startRealtime,
+    selectPlayer,
   };
 });
+
+function loadSelectedPlayerId(): number | null {
+  try {
+    const value = Number(localStorage.getItem(SELECTED_PLAYER_KEY));
+    return Number.isInteger(value) && value > 0 ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 const STATUS_ORDER: Record<QuestStatus, number> = {
   BACKLOG: 0,

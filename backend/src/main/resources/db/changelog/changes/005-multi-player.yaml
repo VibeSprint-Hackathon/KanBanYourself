@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-multi-player
+      author: vibesprint
+      changes:
+        - addColumn:
+            tableName: player
+            columns:
+              - column:
+                  name: github_login
+                  type: VARCHAR(100)
+              - column:
+                  name: github_user_id
+                  type: BIGINT
+        - addUniqueConstraint:
+            tableName: player
+            columnNames: github_login
+            constraintName: uk_player_github_login
+        - addUniqueConstraint:
+            tableName: player
+            columnNames: github_user_id
+            constraintName: uk_player_github_user_id
+        - sql:
+            sql: |
+              UPDATE player
+              SET github_login = 'amjastsov', github_user_id = 117397316
+              WHERE id = 1;
+
+              INSERT INTO player (id, name, total_xp, github_login, github_user_id)
+              VALUES
+                (2, 'Timofei', 640, 'Beresnjev', 22981929),
+                (3, 'Nikita', 360, 'Parsifal22', 73550345);
+
+              UPDATE quest SET assignee_id = 2 WHERE id IN (102, 104, 108);
+              UPDATE quest SET assignee_id = 3 WHERE id IN (105, 107, 110);

@@ -11,6 +11,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class DemoApiMapper {
 
+    private final ProgressionRules progressionRules;
+
+    public DemoApiMapper(ProgressionRules progressionRules) {
+        this.progressionRules = progressionRules;
+    }
+
     public ProgressionResponse toResponse(ProgressionResult result) {
         return toResponse(result, "DEMO", false);
     }
@@ -56,12 +62,14 @@ public class DemoApiMapper {
         return new DemoStateResponse.PlayerView(
                 player.getId(),
                 player.getName(),
+                player.getGithubLogin(),
                 player.getTotalXp(),
                 progress.level(),
                 progress.nextLevelXp(),
                 progress.title(),
                 progress.cosmeticKey(),
-                hasActiveQuest ? "coding" : "idle"
+                hasActiveQuest ? "coding" : "idle",
+                progressionRules.nextUnlock(player.getTotalXp()).map(this::toUnlock).orElse(null)
         );
     }
 
@@ -106,12 +114,14 @@ public class DemoApiMapper {
         return new DemoStateResponse.PlayerView(
                 player.id(),
                 player.name(),
+                player.githubLogin(),
                 player.totalXp(),
                 player.level(),
                 player.nextLevelXp(),
                 player.title(),
                 player.cosmeticKey(),
-                characterStateValue(player.characterState())
+                characterStateValue(player.characterState()),
+                progressionRules.nextUnlock(player.totalXp()).map(this::toUnlock).orElse(null)
         );
     }
 

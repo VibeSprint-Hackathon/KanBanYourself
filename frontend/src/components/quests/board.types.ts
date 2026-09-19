@@ -19,6 +19,7 @@ export interface QuestFormValue {
   xpReward: number;
   columnId: BoardColumnId;
   progress: number | null;
+  assigneeId: number;
   externalReference: string;
 }
 export type ColumnAction = 'rename' | 'left' | 'right' | 'hide';
@@ -87,6 +88,8 @@ export function validQuestForm(value: QuestFormValue): boolean {
     value.description.trim().length <= 2000 &&
     Number.isInteger(value.xpReward) &&
     value.xpReward > 0 &&
+    Number.isInteger(value.assigneeId) &&
+    value.assigneeId > 0 &&
     value.externalReference.trim().length <= 500 &&
     (value.progress === null ||
       (Number.isFinite(value.progress) && value.progress >= 0 && value.progress <= 100))

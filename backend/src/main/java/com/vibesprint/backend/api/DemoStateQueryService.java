@@ -21,8 +21,6 @@ import java.util.Map;
 @Service
 public class DemoStateQueryService {
 
-    private static final long DEMO_PLAYER_ID = 1L;
-
     private final PlayerRepository playerRepository;
     private final QuestRepository questRepository;
     private final RaidRepository raidRepository;
@@ -48,10 +46,14 @@ public class DemoStateQueryService {
 
     @Transactional(readOnly = true)
     public DemoStateResponse getState() {
-        Player player = playerRepository.findById(DEMO_PLAYER_ID)
-                .orElseThrow(() -> new DemoStateNotReadyException("Player " + DEMO_PLAYER_ID + " is not ready"));
+        List<Player> players = playerRepository.findAllByOrderByIdAsc();
+        if (players.isEmpty()) {
+            throw new DemoStateNotReadyException("Players are not ready");
+        }
+
         Raid raid = raidRepository.findByStatus(com.vibesprint.backend.raid.RaidStatus.ACTIVE).orElse(null);
         List<Quest> quests = questRepository.findAllInBoardOrder();
+
         List<DemoStateResponse.QuestView> mergedQuests = new ArrayList<>();
         Map<String, DemoStateResponse.QuestView> byReference = new LinkedHashMap<>();
 
@@ -70,17 +72,39 @@ public class DemoStateQueryService {
                     ? runtimeQuest.externalReference()
                     : "github:" + runtimeQuest.id();
             byReference.put(key, runtimeQuest);
+            mergedQuests.add(runtimeQuest);
         }
 
-        boolean hasActiveQuest = byReference.values().stream()
-                .anyMatch(view -> "IN_PROGRESS".equals(view.status()));
-        ProgressionRules.PlayerProgress progress = progressionRules.describe(player.getTotalXp());
-
         return new DemoStateResponse(
-                mapper.toPlayer(player, progress, hasActiveQuest),
+                mapPlayersFromViews(players, mergedQuests),
                 new ArrayList<>(byReference.values()),
-                mapper.toRaid(raid),
-                progressionRules.nextUnlock(player.getTotalXp()).map(mapper::toUnlock).orElse(null)
+                mapper.toRaid(raid)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<DemoStateResponse.PlayerView> getPlayers() {
+        return mapPlayersFromEntities(playerRepository.findAllByOrderByIdAsc(), questRepository.findAllInBoardOrder());
+    }
+
+    private List<DemoStateResponse.PlayerView> mapPlayersFromEntities(List<Player> players, List<Quest> quests) {
+        return players.stream().map(player -> {
+            boolean hasActiveQuest = quests.stream().anyMatch(quest ->
+                    quest.getAssignee() != null
+                            && quest.getAssignee().getId().equals(player.getId())
+                            && quest.getStatus() == QuestStatus.IN_PROGRESS
+            );
+            return mapper.toPlayer(player, progressionRules.describe(player.getTotalXp()), hasActiveQuest);
+        }).toList();
+    }
+
+    private List<DemoStateResponse.PlayerView> mapPlayersFromViews(List<Player> players, List<DemoStateResponse.QuestView> quests) {
+        return players.stream().map(player -> {
+            boolean hasActiveQuest = quests.stream().anyMatch(quest ->
+                    quest.assigneeId() == player.getId()
+                            && "IN_PROGRESS".equals(quest.status())
+            );
+            return mapper.toPlayer(player, progressionRules.describe(player.getTotalXp()), hasActiveQuest);
+        }).toList();
     }
 }

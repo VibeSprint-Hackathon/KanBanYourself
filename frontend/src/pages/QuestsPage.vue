@@ -19,6 +19,8 @@ const board = useQuestBoard();
 const {
   state,
   quests,
+  players,
+  selectedPlayer,
   columns,
   search,
   compact,
@@ -41,6 +43,9 @@ const selected = computed(
 );
 const selectedColumn = computed(() =>
   columns.value.find((column) => column.id === selected.value?.columnId),
+);
+const selectedAssignee = computed(() =>
+  players.value.find((player) => player.id === selected.value?.quest.assigneeId),
 );
 const detailsPresentation = computed(() => ({
   description: selected.value?.quest.description ?? '',
@@ -254,6 +259,7 @@ async function moveQuest(
         :columns="visibleColumns"
         :all-columns="columns"
         :quests="filteredQuests"
+        :players="players"
         :compact="compact"
         :searching="searching"
         :read-only="mutationPending"
@@ -266,6 +272,7 @@ async function moveQuest(
         v-if="selected"
         v-model="detailsOpen"
         :quest="selected.quest"
+        :assignee="selectedAssignee"
         :presentation="detailsPresentation"
         mode="board"
         :status-label="selectedColumn?.label ?? columnVisuals[selected.columnId].label"
@@ -283,6 +290,8 @@ async function moveQuest(
         :mode="formMode"
         :entry="selected"
         :columns="columns"
+        :players="players"
+        :default-assignee-id="selectedPlayer?.id ?? null"
         :submitting="formSubmitting"
         :error="error"
         @save="saveQuest"

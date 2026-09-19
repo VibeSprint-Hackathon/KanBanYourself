@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 005-github-sync-dedupe
+      id: 006-github-sync-dedupe
       author: vibesprint
       changes:
         - sql:

@@ -10,6 +10,7 @@ HTTP API для Dashboard, доски и управления Raid. Базовы
 | ------------------------------------- | ----: | ---------------------------------- |
 | `GET /api/health`                     |   200 | Проверка запуска                   |
 | `GET /api/demo/state`                 |   200 | Полный снимок демо                 |
+| `GET /api/players`                    |   200 | Упорядоченный список игроков       |
 | `POST /api/demo/reset`                |   200 | Восстановление точного seed        |
 | `POST /api/demo/quests`               |   201 | Создание Квеста                    |
 | `PUT /api/demo/quests/{id}`           |   200 | Обновление Квеста                  |
@@ -56,7 +57,9 @@ HTTP API для Dashboard, доски и управления Raid. Базовы
 
 ### `GET /api/demo/state`
 
-Возвращает `player`, десять упорядоченных `quests`, nullable активный `raid` и nullable `nextUnlock`. Reset возвращает ту же форму. Исходные ключевые значения: игрок 1 с 920 XP, Квест 101 `IN_PROGRESS`/72/180 XP, активный Raid 201 с 180 из 1000 HP.
+Возвращает три `players`, десять общих упорядоченных `quests` и nullable активный `raid`. У каждого игрока есть `githubLogin`, рассчитанный прогресс, `characterState` и собственный nullable `nextUnlock`. Reset возвращает ту же форму.
+
+`GET /api/players` возвращает тот же список игроков по `id`; операций записи для игроков нет. Seed: Andrei/`amjastsov`, Timofei/`Beresnjev`, Nikita/`Parsifal22`.
 
 ## Raid lifecycle
 
@@ -80,11 +83,12 @@ Activation не заменяет текущий Raid молча и возвра�
   "status": "BACKLOG",
   "progress": null,
   "xpReward": 250,
+  "assigneeId": 2,
   "externalReference": null
 }
 ```
 
-Допустимы только незавершённые статусы. Исполнитель всегда demo player 1. Квест получает id из PostgreSQL sequence (начиная с 1000) и добавляется в конец колонки.
+Допустимы только незавершённые статусы. `assigneeId` обязателен и должен указывать на существующего игрока. Квест получает id из PostgreSQL sequence (начиная с 1000) и добавляется в конец колонки.
 
 ## Обновление
 
@@ -92,7 +96,7 @@ Activation не заменяет текущий Raid молча и возвра�
 
 Тело совпадает с create. У незавершённого Квеста разрешены любые незавершённые статусы; смена колонки добавляет его в конец. `DONE` нельзя установить этим endpoint.
 
-У завершённого Квеста разрешено менять только `title`, `description`, `externalReference`; запрос обязан сохранить `status=DONE`, `progress=100` и прежний `xpReward`.
+У завершённого Квеста разрешено менять только `title`, `description`, `externalReference`; запрос обязан сохранить `status=DONE`, `progress=100`, прежние `xpReward` и `assigneeId`.
 
 ## Перемещение
 
@@ -121,7 +125,7 @@ Activation не заменяет текущий Raid молча и возвра�
 { "eventId": "demo-payment-validation-1", "source": "DEMO" }
 ```
 
-Источник: `DEMO | GITHUB`. Одна транзакция переводит Квест в `DONE`, ставит progress 100, добавляет его в конец `DONE`, начисляет XP и наносит равный урон рейду. `ProgressionResponse.quest` использует полный контракт Квеста.
+Источник: `DEMO | GITHUB`. Одна транзакция переводит Квест в `DONE`, ставит progress 100, добавляет его в конец `DONE`, начисляет XP исполнителю Квеста и наносит равный урон рейду. Выбранный во frontend профиль на награду не влияет.
 
 Повтор безопасен: `applied=false`, `reason=ALREADY_COMPLETED`, XP/урон равны 0. При наличии `ACTIVE` его снимок возвращается в `raid`; без активного Raid поле равно `null`, `raidDamage=0`, но Квест завершается и XP начисляется. При HP 0 Raid атомарно становится `COMPLETED`.
 
@@ -130,6 +134,7 @@ Activation не заменяет текущий Raid молча и возвра�
 - `title`: непустой, максимум 255 символов.
 - `description`: обязателен, максимум 2000 символов.
 - `xpReward`: положительное целое.
+- `assigneeId`: положительный id существующего игрока.
 - `externalReference`: nullable, максимум 500 символов.
 - Path id и nullable `beforeQuestId`: положительные.
 
@@ -139,6 +144,7 @@ Activation не заменяет текущий Raid молча и возвра�
 | ---: | ---------------------- | --------------------------------------------------------------- |
 |  400 | `INVALID_REQUEST`      | Невалидный JSON, поля или progress/status                       |
 |  404 | `QUEST_NOT_FOUND`      | Нет Квеста или `beforeQuestId` не в целевой колонке             |
+|  404 | `PLAYER_NOT_FOUND`     | Нет игрока из `assigneeId`                                      |
 |  409 | `QUEST_CONFLICT`       | Запрещённый переход, удаление или изменение завершённого Квеста |
 |  404 | `RAID_NOT_FOUND`       | Нет Raid                                                        |
 |  409 | `RAID_CONFLICT`        | Запрещённый lifecycle-переход или уже есть `ACTIVE`             |
@@ -147,6 +153,6 @@ Activation не заменяет текущий Raid молча и возвра�
 
 ## Reset и realtime
 
-`POST /api/demo/reset` атомарно удаляет пользовательские изменения, восстанавливает игрока, десять Квестов, один `ACTIVE`, один `DRAFT` и sequence на 1000.
+`POST /api/demo/reset` атомарно удаляет пользовательские изменения, восстанавливает трёх игроков, распределённые Квесты, один `ACTIVE`, один `DRAFT` и sequence на 1000.
 
 STOMP подключается к `/ws`, topic — `/topic/progression`. Публикуется только применённый `ProgressionResponse`; повтор и reset событий не создают. REST остаётся обязательным источником полного состояния.

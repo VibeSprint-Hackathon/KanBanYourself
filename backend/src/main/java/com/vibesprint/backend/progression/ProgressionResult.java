@@ -48,6 +48,7 @@ public record ProgressionResult(
     public record PlayerSnapshot(
             long id,
             String name,
+            String githubLogin,
             int totalXp,
             int level,
             Integer nextLevelXp,
