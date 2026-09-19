@@ -91,6 +91,6 @@ class ProgressionConcurrencyTests {
                 "update quest set status = 'IN_PROGRESS', progress = 72, sort_order = 100 where id = 101"
         );
         jdbcTemplate.update("update player set total_xp = 920 where id = 1");
-        jdbcTemplate.update("update raid set current_hp = 180 where id = 201");
+        jdbcTemplate.update("update raid set current_hp = 180, status = 'ACTIVE' where id = 201");
     }
 }

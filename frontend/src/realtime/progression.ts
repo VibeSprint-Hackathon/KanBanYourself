@@ -96,7 +96,11 @@ function parseProgression(body: string): ProgressionResponse | null {
     ) {
       return null;
     }
-    if (!isRecord(value.quest) || !isRecord(value.player) || !isRecord(value.raid)) {
+    if (
+      !isRecord(value.quest) ||
+      !isRecord(value.player) ||
+      (value.raid !== null && !isRecord(value.raid))
+    ) {
       return null;
     }
     return value as unknown as ProgressionResponse;

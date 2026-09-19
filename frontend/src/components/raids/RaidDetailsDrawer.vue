@@ -5,8 +5,9 @@ import { formatNumber } from '@/fixtures/dashboard.fixture';
 import { raidPercent } from './raid.types';
 
 const open = defineModel<boolean>({ required: true });
-const props = defineProps<{ raid: Raid }>();
-const defeated = computed(() => props.raid.status === 'DEFEATED');
+const props = defineProps<{ raid: Raid; mutating?: boolean }>();
+defineEmits<{ edit: []; activate: []; cancel: []; complete: []; delete: [] }>();
+const defeated = computed(() => props.raid.status === 'COMPLETED');
 const percent = computed(() => raidPercent(props.raid));
 </script>
 
@@ -56,12 +57,59 @@ const percent = computed(() => raidPercent(props.raid));
           />
         </section>
         <section>
+          <h3 class="eyebrow muted">Description</h3>
+          <p>{{ raid.description }}</p>
+        </section>
+        <section v-if="raid.externalReference">
+          <h3 class="eyebrow muted">External reference</h3>
+          <p>{{ raid.externalReference }}</p>
+        </section>
+        <section>
           <h3 class="eyebrow muted">How Raids work</h3>
-          <p>Complete Quests to damage the Raid Boss.</p>
+          <p v-if="raid.status === 'ACTIVE'">Complete Quests to damage the Raid Boss.</p>
+          <p v-else-if="raid.status === 'DRAFT'">Activate this Raid when the team is ready.</p>
+          <p v-else>This Raid is preserved in team history.</p>
         </section>
       </div>
       <footer class="drawer-footer">
-        <q-btn flat no-caps label="Close" @click="open = false" />
+        <q-btn flat no-caps label="Edit" :disable="mutating" @click="$emit('edit')" />
+        <q-btn
+          v-if="raid.status === 'DRAFT'"
+          unelevated
+          no-caps
+          color="primary"
+          label="Activate"
+          :loading="mutating"
+          @click="$emit('activate')"
+        />
+        <q-btn
+          v-if="raid.status === 'ACTIVE'"
+          outline
+          no-caps
+          color="positive"
+          label="Complete"
+          :disable="mutating"
+          @click="$emit('complete')"
+        />
+        <q-btn
+          v-if="raid.status === 'ACTIVE'"
+          outline
+          no-caps
+          color="negative"
+          label="Cancel Raid"
+          :disable="mutating"
+          @click="$emit('cancel')"
+        />
+        <q-btn
+          v-if="raid.status === 'DRAFT'"
+          flat
+          no-caps
+          color="negative"
+          label="Delete draft"
+          :disable="mutating"
+          @click="$emit('delete')"
+        />
+        <q-btn flat no-caps label="Close" :disable="mutating" @click="open = false" />
       </footer>
     </q-card>
   </q-dialog>
@@ -140,11 +188,13 @@ section p {
   line-height: 1.65;
 }
 .drawer-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
   padding: 20px 24px;
   border-top: 1px solid var(--border);
 }
 .drawer-footer .q-btn {
-  width: 100%;
   height: 46px;
   border: 1px solid var(--border);
   color: var(--muted);

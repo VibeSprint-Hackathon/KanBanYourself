@@ -4,6 +4,7 @@ import com.vibesprint.backend.player.PlayerRepository;
 import com.vibesprint.backend.quest.QuestRepository;
 import com.vibesprint.backend.quest.QuestStatus;
 import com.vibesprint.backend.raid.RaidRepository;
+import com.vibesprint.backend.raid.RaidStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,7 +60,7 @@ class ProgressionServiceTests {
         assertEquals("rare-hoodie", result.player().cosmeticKey());
         assertEquals(ProgressionResult.CharacterState.IDLE, result.player().characterState());
         assertEquals(0, result.raid().currentHp());
-        assertEquals(ProgressionResult.RaidStatus.DEFEATED, result.raid().status());
+        assertEquals(RaidStatus.COMPLETED, result.raid().status());
 
         assertEquals(QuestStatus.DONE, questRepository.findById(101L).orElseThrow().getStatus());
         assertEquals(1100, playerRepository.findById(1L).orElseThrow().getTotalXp());
@@ -79,12 +80,12 @@ class ProgressionServiceTests {
         assertFalse(repeated.levelUp());
         assertNull(repeated.unlockedCosmetic());
         assertNull(repeated.reaction());
-        assertTrue(repeated.bossDefeated());
+        assertFalse(repeated.bossDefeated());
         assertEquals(QuestStatus.DONE, repeated.quest().status());
         assertEquals(100, repeated.quest().progress());
         assertEquals(300, repeated.quest().sortOrder());
         assertEquals(1100, repeated.player().totalXp());
-        assertEquals(0, repeated.raid().currentHp());
+        assertNull(repeated.raid());
     }
 
     @Test
@@ -128,15 +129,31 @@ class ProgressionServiceTests {
     }
 
     @Test
-    void rejectsIncompleteDemoStateBeforeMutation() {
+    void completesQuestWithoutActiveRaid() {
         raidRepository.deleteAllInBatch();
 
-        assertThrows(
-                DemoStateNotReadyException.class,
-                () -> progressionService.completeQuest(command(101L, "missing-raid"))
-        );
-        assertEquals(QuestStatus.IN_PROGRESS, questRepository.findById(101L).orElseThrow().getStatus());
-        assertEquals(920, playerRepository.findById(1L).orElseThrow().getTotalXp());
+        ProgressionResult result = progressionService.completeQuest(command(101L, "missing-raid"));
+
+        assertTrue(result.applied());
+        assertEquals(180, result.xpGained());
+        assertEquals(0, result.raidDamage());
+        assertNull(result.raid());
+        assertFalse(result.bossDefeated());
+        assertEquals(QuestStatus.DONE, questRepository.findById(101L).orElseThrow().getStatus());
+        assertEquals(1100, playerRepository.findById(1L).orElseThrow().getTotalXp());
+    }
+
+    @Test
+    void doesNotDamageCancelledRaid() {
+        jdbcTemplate.update("update raid set status = 'CANCELLED' where id = 201");
+
+        ProgressionResult result = progressionService.completeQuest(command(102L, "cancelled-raid"));
+
+        assertTrue(result.applied());
+        assertEquals(0, result.raidDamage());
+        assertNull(result.raid());
+        assertEquals(180, raidRepository.findById(201L).orElseThrow().getCurrentHp());
+        assertEquals(RaidStatus.CANCELLED, raidRepository.findById(201L).orElseThrow().getStatus());
     }
 
     @Test

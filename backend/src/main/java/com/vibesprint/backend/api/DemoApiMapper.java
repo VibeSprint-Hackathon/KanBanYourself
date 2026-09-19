@@ -66,12 +66,17 @@ public class DemoApiMapper {
     }
 
     public DemoStateResponse.RaidView toRaid(Raid raid) {
+        if (raid == null) {
+            return null;
+        }
         return new DemoStateResponse.RaidView(
                 raid.getId(),
                 raid.getName(),
+                raid.getDescription(),
                 raid.getMaxHp(),
                 raid.getCurrentHp(),
-                raid.getCurrentHp() == 0 ? "DEFEATED" : "ACTIVE"
+                raid.getStatus().name(),
+                raid.getExternalReference()
         );
     }
 
@@ -111,12 +116,17 @@ public class DemoApiMapper {
     }
 
     private DemoStateResponse.RaidView toRaid(ProgressionResult.RaidSnapshot raid) {
+        if (raid == null) {
+            return null;
+        }
         return new DemoStateResponse.RaidView(
                 raid.id(),
                 raid.name(),
+                raid.description(),
                 raid.maxHp(),
                 raid.currentHp(),
-                raid.status().name()
+                raid.status().name(),
+                raid.externalReference()
         );
     }
 

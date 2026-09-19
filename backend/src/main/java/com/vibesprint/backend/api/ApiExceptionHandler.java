@@ -5,6 +5,8 @@ import com.vibesprint.backend.progression.InvalidProgressionCommandException;
 import com.vibesprint.backend.progression.QuestNotFoundException;
 import com.vibesprint.backend.quest.InvalidQuestRequestException;
 import com.vibesprint.backend.quest.QuestConflictException;
+import com.vibesprint.backend.raid.RaidConflictException;
+import com.vibesprint.backend.raid.RaidNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(QuestConflictException.class)
     public ResponseEntity<ApiErrorResponse> questConflict(QuestConflictException exception) {
         return error(HttpStatus.CONFLICT, "QUEST_CONFLICT", exception.getMessage());
+    }
+
+    @ExceptionHandler(RaidNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> raidNotFound(RaidNotFoundException exception) {
+        return error(HttpStatus.NOT_FOUND, "RAID_NOT_FOUND", exception.getMessage());
+    }
+
+    @ExceptionHandler(RaidConflictException.class)
+    public ResponseEntity<ApiErrorResponse> raidConflict(RaidConflictException exception) {
+        return error(HttpStatus.CONFLICT, "RAID_CONFLICT", exception.getMessage());
     }
 
     @ExceptionHandler(DemoStateNotReadyException.class)

@@ -41,9 +41,11 @@ public record DemoStateResponse(
     public record RaidView(
             long id,
             String name,
+            String description,
             int maxHp,
             int currentHp,
-            String status
+            String status,
+            String externalReference
     ) {
     }
 

@@ -1,6 +1,6 @@
 // Контракты GET /api/demo/state и POST /api/demo/quests/{questId}/complete.
 export type QuestStatus = 'BACKLOG' | 'TODO' | 'IN_PROGRESS' | 'TESTING' | 'DONE';
-export type RaidStatus = 'ACTIVE' | 'DEFEATED';
+export type RaidStatus = 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 export type CharacterState = 'idle' | 'coding';
 export type CharacterReaction = 'happy' | 'level-up';
 
@@ -53,10 +53,21 @@ export interface MoveQuestRequest {
 export interface Raid {
   id: number;
   name: string;
+  description: string;
   maxHp: number;
   currentHp: number;
   status: RaidStatus;
+  externalReference: string | null;
 }
+
+export interface CreateRaidRequest {
+  name: string;
+  description: string;
+  maxHp: number;
+  externalReference: string | null;
+}
+
+export type UpdateRaidRequest = CreateRaidRequest;
 
 export interface UnlockTarget {
   level: number;
@@ -67,7 +78,7 @@ export interface UnlockTarget {
 export interface DemoState {
   player: Player;
   quests: Quest[];
-  raid: Raid;
+  raid: Raid | null;
   nextUnlock: UnlockTarget | null;
 }
 
@@ -93,7 +104,7 @@ export interface ProgressionResult {
   bossDefeated: boolean;
   quest: Quest;
   player: Player;
-  raid: Raid;
+  raid: Raid | null;
 }
 
 // Совместимые имена для realtime-слоя и имён DTO backend.

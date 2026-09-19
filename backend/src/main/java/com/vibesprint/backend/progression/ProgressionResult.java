@@ -1,6 +1,7 @@
 package com.vibesprint.backend.progression;
 
 import com.vibesprint.backend.quest.QuestStatus;
+import com.vibesprint.backend.raid.RaidStatus;
 
 public record ProgressionResult(
         String eventId,
@@ -31,11 +32,6 @@ public record ProgressionResult(
         CODING
     }
 
-    public enum RaidStatus {
-        ACTIVE,
-        DEFEATED
-    }
-
     public record QuestSnapshot(
             long id,
             String title,
@@ -64,9 +60,11 @@ public record ProgressionResult(
     public record RaidSnapshot(
             long id,
             String name,
+            String description,
             int maxHp,
             int currentHp,
-            RaidStatus status
+            RaidStatus status,
+            String externalReference
     ) {
     }
 }

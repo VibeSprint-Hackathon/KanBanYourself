@@ -8,7 +8,7 @@ import { raidPercent, type RaidDamageFeedback } from './raid.types';
 
 const props = defineProps<{ raid: Raid; damage?: RaidDamageFeedback | null }>();
 defineEmits<{ open: [] }>();
-const defeated = computed(() => props.raid.status === 'DEFEATED');
+const defeated = computed(() => props.raid.status === 'COMPLETED');
 const percent = computed(() => raidPercent(props.raid));
 </script>
 
