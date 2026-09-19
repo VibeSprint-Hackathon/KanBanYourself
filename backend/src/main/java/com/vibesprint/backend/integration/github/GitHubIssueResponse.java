@@ -1,5 +1,7 @@
 package com.vibesprint.backend.integration.github;
 
+import java.util.List;
+
 public record GitHubIssueResponse(
         long id,
         int number,
@@ -8,6 +10,7 @@ public record GitHubIssueResponse(
         String url,
         String htmlUrl,
         String repository,
-        String body
+        String body,
+        List<String> labels
 ) {
 }
