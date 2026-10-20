@@ -318,6 +318,7 @@ public class GitHubIssueService {
                 null,
                 null,
                 false,
+                List.of(),
                 new DemoStateResponse.QuestView(
                         quest.getId(),
                         title,

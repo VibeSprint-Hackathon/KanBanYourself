@@ -100,6 +100,7 @@ public class GitHubIssueWebhookService {
                 null,
                 "updated",
                 false,
+                List.of(),
                 linkedQuest == null ? null : new com.vibesprint.backend.api.DemoStateResponse.QuestView(
                         linkedQuest.getId(),
                         linkedQuest.getTitle(),
